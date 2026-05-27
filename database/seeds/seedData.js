@@ -145,7 +145,7 @@ const studySpots = [
   },
   {
     name: 'E3 Level 6 Study Area', building: 'E3',
-    faculty: ['Engineering'], spot_type: 'study_room',
+    faculty: ['Design & Engineering'], spot_type: 'study_room',
     latitude: 1.2987, longitude: 103.7711, capacity: 35,
     has_power: true, has_aircon: true,
     description: 'Study tables outside engineering lecture halls.',
