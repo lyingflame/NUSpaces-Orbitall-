@@ -1,8 +1,8 @@
--- Initial Database (ER Diagram)
+-- Initial Database Tables
 
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
-    id              SERIAL PRIMARY KEY,
+    id              INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     email           VARCHAR(255) UNIQUE NOT NULL,
     username        VARCHAR(100) UNIQUE NOT NULL,
     password_hash   VARCHAR(255) NOT NULL,
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
 -- All NUS faculties: Faculty of Arts & Social Science, School of Business, School of Computing, School of Lifelong Education, Faculty of Dentistry, College of Design & Engineering, 
 -- Faculty of Law, Yong Loo Lin School of Medicine, Yong Siew Toh Conservatory of Music, Saw Swee Hock School of Public Health, Faculty of Science & Others (University)
 CREATE TABLE IF NOT EXISTS study_spots (
-    id              SERIAL PRIMARY KEY,
+    id              INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     name            VARCHAR(255) NOT NULL,
     building        VARCHAR(255),
     faculty         TEXT[] CHECK (faculty <@ ARRAY['Arts & Social Sciences', 'Business', 'Computing', 'Lifelong Education', 'Dentistry', 
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS study_spots (
     spot_type       VARCHAR(50) CHECK (spot_type IN ('library', 'study_room', 'outdoor', 'lounge', 'lab')),
     latitude        DECIMAL(10, 7),
     longitude       DECIMAL(10, 7),
-    capacity        INTEGER,
+    capacity        INT,
     has_power       BOOLEAN DEFAULT FALSE,
     has_aircon      BOOLEAN DEFAULT TRUE,
     image_url       VARCHAR(500),
@@ -33,11 +33,11 @@ CREATE TABLE IF NOT EXISTS study_spots (
 
 -- Feedback table (Data source for algorithm)
 CREATE TABLE IF NOT EXISTS feedback (
-    id              SERIAL PRIMARY KEY,
-    user_id         INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    spot_id         INTEGER REFERENCES study_spots(id) ON DELETE CASCADE,
-    noise_level     INTEGER NOT NULL CHECK (noise_level BETWEEN 1 AND 5),
-    crowd_level     INTEGER NOT NULL CHECK (crowd_level BETWEEN 1 AND 5),
+    id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id         INT REFERENCES users(id) ON DELETE CASCADE,
+    spot_id         INT REFERENCES study_spots(id) ON DELETE CASCADE,
+    noise_level     INT NOT NULL CHECK (noise_level BETWEEN 1 AND 5),
+    crowd_level     INT NOT NULL CHECK (crowd_level BETWEEN 1 AND 5),
     comment         TEXT DEFAULT '',
     created_at      TIMESTAMP DEFAULT NOW()
 );
@@ -46,8 +46,8 @@ CREATE TABLE IF NOT EXISTS feedback (
 -- Implemented to show opening/closing hours and adjust according based on date.
 -- Most spot schedules should be fixed but NUS libraries fluctuate and have exceptions
 CREATE TABLE IF NOT EXISTS spot_schedules (
-    id              SERIAL PRIMARY KEY,
-    spot_id         INTEGER REFERENCES study_spots(id) ON DELETE CASCADE,
+    id              INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    spot_id         INT REFERENCES study_spots(id) ON DELETE CASCADE,
     day_of_week     VARCHAR(20) NOT NULL CHECK (day_of_week IN ('weekday', 'saturday', 'sunday')),
     opening_time    TIME,
     closing_time    TIME,
@@ -60,8 +60,8 @@ CREATE TABLE IF NOT EXISTS spot_schedules (
 -- Takes priority over spot_schedules for specified dates
 -- E.g. spot_id=2 (Central Library L6 Reading Area), date=2026-02-16, opening_time=09:00, closing_time=14:00, reason='CNY Eve'
 CREATE TABLE IF NOT EXISTS spot_schedule_overrides (
-    id              SERIAL PRIMARY KEY,
-    spot_id         INTEGER REFERENCES study_spots(id) ON DELETE CASCADE,
+    id              INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    spot_id         INT REFERENCES study_spots(id) ON DELETE CASCADE,
     start_date      DATE,
     end_date        DATE CHECK (end_date >= start_date),
     opening_time    TIME,
@@ -75,12 +75,12 @@ CREATE TABLE IF NOT EXISTS spot_schedule_overrides (
 -- Pre-computed scores updated by algorithm (so don't have to recalculate for every api call currently)
 -- Data Updates: Every 15 minutes or when user sends new feedback for a spot (change to real-time when socket.io implemented)
 CREATE TABLE IF NOT EXISTS spot_scores (
-    spot_id             INTEGER PRIMARY KEY REFERENCES study_spots(id) ON DELETE CASCADE,
+    spot_id             INT PRIMARY KEY REFERENCES study_spots(id) ON DELETE CASCADE,
     avg_noise           DECIMAL(5, 2) DEFAULT 0,
     avg_crowd           DECIMAL(5, 2) DEFAULT 0,
     quietness_score     DECIMAL(5, 2) DEFAULT 0,
-    report_count        INTEGER DEFAULT 0,
-    recent_report_count INTEGER DEFAULT 0,
+    report_count        INT DEFAULT 0,
+    recent_report_count INT DEFAULT 0,
     last_updated        TIMESTAMP DEFAULT NOW()
 );
 

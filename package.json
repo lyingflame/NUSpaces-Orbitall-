@@ -1,7 +1,7 @@
 {
-  "name": "nuspaces-backend",
+  "name": "nuspaces",
   "version": "1.0.0",
-  "description": "NUSpaces quiet study spot recommendation API",
+  "description": "NUSpaces Web App",
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
