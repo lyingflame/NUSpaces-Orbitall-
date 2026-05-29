@@ -79,7 +79,7 @@ function calculateScore(feedbackList) {
       avgCrowd: null,
       reportCount: 0,
       recentReportCount: 0,
-      status: 'No data',
+      status: 'No Data',
     };
   }
 

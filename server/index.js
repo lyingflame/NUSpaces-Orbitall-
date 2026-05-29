@@ -10,6 +10,7 @@ dotenv.config();
 
 const { testConnection } = require('./config/database');
 const scoringService = require('./services/scoringService');
+const { apiLimiter } = require('./security/rateLimit');
 
 const app = express();
 const PORT = process.env.PORT; 
@@ -23,6 +24,7 @@ app.use(cors({
 app.use(express.json());
 
 // API routes
+app.use('/api', apiLimiter);
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/spots', require('./routes/spotRoutes'));
 app.use('/api/feedback', require('./routes/feedbackRoutes'));
