@@ -2,14 +2,14 @@
   Quietness Score Algorithm
 
   Formula:  score = Σ(noise × weight) / Σ(weight)
-  noise  = noise_level × 20 (normalised from 1-5 to 20-100)
+  noise  = (noise_level - 1) × 25 (normalised from 1-5 to 0-100)
   weight = max(0.1, e^(-0.05 × days_old)) (time-decay for older data)
 
   Time period filtering:
   Only take into account data that fall within TIME_WINDOW_HOURS to current time of day
 
-  Score ranges: (May change)
-  0-30 Very Quiet, 31-50 Quiet, 51-70 Moderate, 71-85 Noisy, 86-100 Very Noisy
+  Score ranges: (Between ranges of 1.5 to 4.5 normalised to 100)
+  0-12.5 Very Quiet, 12.5-37.5 Quiet, 37.5-62.5 Moderate, 62.5-87.5 Noisy, 87.5-100 Very Noisy
 */ 
 
 const Feedback = require('../models/Feedback');
@@ -18,7 +18,7 @@ const StudySpot = require('../models/StudySpot');
 
 const LAMBDA = 0.05;           // time-decay
 const MIN_WEIGHT = 0.1;        // for historical data
-const TIME_WINDOW_HOURS = 12;   // +- 1 hour time window (may adjust)
+const TIME_WINDOW_HOURS = 12;   // +- 1 hour time window (currently disabled)
 const RECENT_HOURS = 6;        
 
 const scoringService = {
@@ -93,9 +93,10 @@ function calculateScore(feedbackList) {
     const daysSince = (now - new Date(fb.created_at)) / (1000 * 60 * 60 * 24);
     const weight = Math.max(MIN_WEIGHT, Math.exp(-LAMBDA * daysSince));
 
-    // normalise values from level 1-5 to 20-100
-    weightedNoiseSum += (fb.noise_level * 20) * weight;
-    weightedCrowdSum += (fb.crowd_level * 20) * weight;
+    // normalise values from level 1-5 to 0-100
+    // 1 = 0, 2 = 25, 3 = 50, 4 = 75, 5 = 100
+    weightedNoiseSum += ((fb.noise_level - 1) * 25) * weight;
+    weightedCrowdSum += ((fb.crowd_level - 1) * 25) * weight;
     totalWeight += weight;
 
     if (daysSince * 24 <= RECENT_HOURS) {
@@ -117,10 +118,10 @@ function calculateScore(feedbackList) {
 
 function getStatusLabel(score) {
   if (score == null) return 'No Data';
-  else if (score <= 30) return 'Very Quiet';
-  else if (score <= 50) return 'Quiet';
-  else if (score <= 70) return 'Moderate';
-  else if (score <= 85) return 'Noisy';
+  if (score <= 12.5) return 'Very Quiet';
+  if (score <= 37.5) return 'Quiet';
+  if (score <= 62.5) return 'Moderate';
+  if (score <= 87.5) return 'Noisy';
   return 'Very Noisy';
 }
 

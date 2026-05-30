@@ -173,11 +173,11 @@ function getOpeningStatus(override, schedule, currentTime) {
 
 // Noise categories
 function getNoiseLabel(score) {
-  if (score == null) return 'No data';
-  if (score <= 30) return 'Very Quiet';
-  if (score <= 50) return 'Quiet';
-  if (score <= 70) return 'Moderate';
-  if (score <= 85) return 'Noisy';
+  if (score == null) return 'No Data';
+  if (score <= 12.5) return 'Very Quiet';
+  if (score <= 37.5) return 'Quiet';
+  if (score <= 62.5) return 'Moderate';
+  if (score <= 87.5) return 'Noisy';
   return 'Very Noisy';
 }
 

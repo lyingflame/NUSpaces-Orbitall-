@@ -34,7 +34,7 @@ const loginSchema = z.object({
     .string({ required_error: 'Email is required.' })
     .email('Must be a valid email address.')
     .transform(val => val.trim().toLowerCase()),
- 
+
   password: z
     .string({ required_error: 'Password is required.' })
     .min(1, 'Password is required.'),
