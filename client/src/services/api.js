@@ -1,4 +1,5 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 export async function apiRequest(endpoint, options = {}) {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -19,10 +20,7 @@ export async function apiRequest(endpoint, options = {}) {
     data = { message: text };
   }
 
-  if (
-    response.status === 401 &&
-    data?.code === "TOKEN_EXPIRED"
-  ) {
+  if (response.status === 401 && data?.code === "TOKEN_EXPIRED") {
     const refreshed = await refreshToken();
 
     if (refreshed) {
@@ -44,16 +42,13 @@ export async function apiRequest(endpoint, options = {}) {
 
 async function refreshToken() {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+    const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
       method: "POST",
       credentials: "include",
     });
-    return res.ok;
+
+    return response.ok;
   } catch {
     return false;
   }
-}
-
-export function getApiBaseUrl() {
-  return API_BASE_URL;
 }

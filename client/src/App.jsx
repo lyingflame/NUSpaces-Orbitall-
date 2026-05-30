@@ -19,16 +19,24 @@ export default function App() {
 
   async function handleLogout() {
     try {
-      await apiRequest("/api/auth/logout", { method: "POST" });
+      await apiRequest("/api/auth/logout", {
+        method: "POST",
+      });
     } catch (err) {
       console.error("Logout failed:", err.message);
     }
+
     localStorage.removeItem("nuspacesUser");
     setUser(null);
   }
 
   if (showLogin) {
-    return <LoginPage onLogin={handleLogin} onBack={() => setShowLogin(false)} />;
+    return (
+      <LoginPage
+        onLogin={handleLogin}
+        onBack={() => setShowLogin(false)}
+      />
+    );
   }
 
   return (

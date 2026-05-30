@@ -2,24 +2,29 @@ import { useEffect, useMemo, useState } from "react";
 import {
   AirVent,
   CheckCircle,
-  Filter,
   LogIn,
   LogOut,
   MapPin,
-  MessageCircle,
-  Navigation,
   RefreshCcw,
   Search,
-  Sparkles,
   Users,
   Volume2,
   Zap,
 } from "lucide-react";
 import { apiRequest } from "../services/api";
 
+const NOISE_FILTERS = [
+  "All",
+  "Very Quiet",
+  "Quiet",
+  "Moderate",
+  "Noisy",
+  "Very Noisy",
+];
+
 function toArray(data) {
   if (Array.isArray(data)) return data;
-  return data.spots || data.data || [];
+  return data?.spots || data?.data || [];
 }
 
 function displayFaculty(faculty) {
@@ -27,13 +32,52 @@ function displayFaculty(faculty) {
   return faculty || "University";
 }
 
+function scoreToNoiseStatus(score) {
+  const value = Number(score);
+
+  if (Number.isNaN(value)) return "No reports yet";
+
+  if (value <= 12.5) return "Very Quiet";
+  if (value <= 37.5) return "Quiet";
+  if (value <= 62.5) return "Moderate";
+  if (value <= 87.5) return "Noisy";
+  return "Very Noisy";
+}
+
 function getNoiseStatus(space) {
-  return space.noise_status || space.noiseLevel || "No reports yet";
+  if (space.noise_status) return space.noise_status;
+
+  if (space.quietness_score !== undefined && space.quietness_score !== null) {
+    return scoreToNoiseStatus(space.quietness_score);
+  }
+
+  return space.noiseLevel || "No reports yet";
+}
+
+function normalisedScoreToFivePoint(score) {
+  const value = Number(score);
+
+  if (Number.isNaN(value)) return null;
+
+  const fivePointValue = value / 25 + 1;
+  return Math.min(5, Math.max(1, fivePointValue));
 }
 
 function getCrowdStatus(space) {
+  if (
+    space.report_count !== undefined &&
+    Number(space.report_count) === 0 &&
+    Number(space.avg_crowd) === 0
+  ) {
+    return "No reports yet";
+  }
+
   if (space.avg_crowd !== undefined && space.avg_crowd !== null) {
-    return `${Number(space.avg_crowd).toFixed(1)} / 5`;
+    const crowdLevel = normalisedScoreToFivePoint(space.avg_crowd);
+
+    if (crowdLevel !== null) {
+      return `${crowdLevel.toFixed(1)} / 5`;
+    }
   }
 
   return space.crowdLevel || "No reports yet";
@@ -51,20 +95,13 @@ function getStatusClass(space) {
   return "unknown";
 }
 
-function getQuietnessScore(space) {
-  if (space.quietness_score === undefined || space.quietness_score === null) {
-    return 50;
-  }
-
-  return Number(space.quietness_score);
-}
-
 export default function ExplorePage({ user, onLoginClick, onLogout }) {
   const [spaces, setSpaces] = useState([]);
   const [search, setSearch] = useState("");
   const [noiseFilter, setNoiseFilter] = useState("All");
   const [typeFilter, setTypeFilter] = useState("All");
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
 
   async function loadSpaces() {
@@ -78,6 +115,24 @@ export default function ExplorePage({ user, onLoginClick, onLogout }) {
       setError(err.message || "Unable to load study spaces.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleRefreshData() {
+    try {
+      setRefreshing(true);
+      setError("");
+
+      await apiRequest("/api/spots/refresh", {
+        method: "POST",
+      });
+
+      const data = await apiRequest("/api/spots");
+      setSpaces(toArray(data));
+    } catch (err) {
+      setError(err.message || "Unable to refresh study space data.");
+    } finally {
+      setRefreshing(false);
     }
   }
 
@@ -102,19 +157,14 @@ export default function ExplorePage({ user, onLoginClick, onLogout }) {
       displayFaculty(space.faculty).toLowerCase().includes(query);
 
     const noise = getNoiseStatus(space).toLowerCase();
-
     const matchesNoise =
-      noiseFilter === "All" || noise.includes(noiseFilter.toLowerCase());
+      noiseFilter === "All" || noise === noiseFilter.toLowerCase();
 
     const type = space.spot_type || space.type || "";
     const matchesType = typeFilter === "All" || type === typeFilter;
 
     return matchesSearch && matchesNoise && matchesType;
   });
-
-  const bestMatch = [...filteredSpaces].sort(
-    (a, b) => getQuietnessScore(a) - getQuietnessScore(b)
-  )[0];
 
   async function handleQuickFeedback(space) {
     if (!user) {
@@ -140,7 +190,7 @@ export default function ExplorePage({ user, onLoginClick, onLogout }) {
       });
 
       alert("Feedback submitted successfully.");
-      loadSpaces();
+      await handleRefreshData();
     } catch (err) {
       alert(err.message);
     }
@@ -151,7 +201,7 @@ export default function ExplorePage({ user, onLoginClick, onLogout }) {
       <nav className="np-navbar">
         <div className="np-brand">
           <div className="np-brand-icon">
-            <MapPin size={24} />
+            <MapPin size={22} />
           </div>
 
           <div>
@@ -161,113 +211,44 @@ export default function ExplorePage({ user, onLoginClick, onLogout }) {
         </div>
 
         <div className="np-nav-actions">
-          <a href="#features">Features</a>
-          <a href="#spaces">Explore</a>
-
           {user ? (
             <>
-              <span className="np-user-pill">{user.username || user.email}</span>
+              <span className="np-user-pill">
+                {user.username || user.email}
+              </span>
               <button className="np-outline-btn" onClick={onLogout}>
-                <LogOut size={16} />
+                <LogOut size={15} />
                 Logout
               </button>
             </>
           ) : (
             <button className="np-login-btn" onClick={onLoginClick}>
-              <LogIn size={16} />
+              <LogIn size={15} />
               Login
             </button>
           )}
         </div>
       </nav>
 
-      <header className="np-hero">
-        <section className="np-hero-left">
-          <p className="np-eyebrow">Campus study space finder</p>
-
-          <h2>Find quiet study spaces on campus, in real time.</h2>
-
-          <p>
-            Save time by discovering nearby NUS study spots based on noise,
-            crowd levels, facilities, and live student feedback.
-          </p>
-
-          <div className="np-hero-buttons">
-            <a href="#spaces" className="np-primary-link">
-              Explore spaces
-              <Navigation size={17} />
-            </a>
-
-            <button className="np-secondary-btn" onClick={loadSpaces}>
-              Refresh data
-              <RefreshCcw size={17} />
-            </button>
+      <main className="np-main">
+        <section className="np-header-strip">
+          <div>
+            <h2>Explore Study Spaces</h2>
+            <p>
+              Search and filter NUS study spaces by quietness, crowd level, and
+              space type.
+            </p>
           </div>
+
+          <button className="np-refresh-btn" onClick={handleRefreshData}>
+            <RefreshCcw size={15} />
+            {refreshing ? "Refreshing..." : "Refresh data"}
+          </button>
         </section>
 
-        <section className="np-hero-right">
-          <div className="np-phone-card">
-            <div className="np-phone-top">
-              <span></span>
-              <p>Nearby Spaces</p>
-              <Sparkles size={17} />
-            </div>
-
-            <div className="np-mini-search">
-              <Search size={15} />
-              <span>Search study spaces...</span>
-            </div>
-
-            {(filteredSpaces.length ? filteredSpaces : spaces)
-              .slice(0, 4)
-              .map((space) => (
-                <div className="np-mini-space" key={space.id}>
-                  <div>
-                    <h4>{space.name}</h4>
-                    <p>
-                      {getNoiseStatus(space)} · Crowd {getCrowdStatus(space)}
-                    </p>
-                  </div>
-
-                  <span className={`np-mini-status ${getStatusClass(space)}`}>
-                    {getOpenStatus(space)}
-                  </span>
-                </div>
-              ))}
-          </div>
-        </section>
-      </header>
-
-      <section className="np-features" id="features">
-        <div className="np-feature-card">
-          <Volume2 size={20} />
-          <h3>Real-time status</h3>
-          <p>View available spaces and current noise levels.</p>
-        </div>
-
-        <div className="np-feature-card">
-          <Filter size={20} />
-          <h3>Search & filter</h3>
-          <p>Filter by noise, building, faculty, and space type.</p>
-        </div>
-
-        <div className="np-feature-card">
-          <Users size={20} />
-          <h3>Crowd indicator</h3>
-          <p>Estimate how busy each study space is.</p>
-        </div>
-
-        <div className="np-feature-card">
-          <MessageCircle size={20} />
-          <h3>User feedback</h3>
-          <p>Report whether a space is quiet, crowded, or conducive.</p>
-        </div>
-      </section>
-
-      <main className="np-main" id="spaces">
         <section className="np-search-panel">
           <div className="np-search-box">
-            <Search size={20} />
+            <Search size={18} />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -276,7 +257,7 @@ export default function ExplorePage({ user, onLoginClick, onLogout }) {
           </div>
 
           <div className="np-filter-row">
-            {["All", "Very Quiet", "Quiet", "Moderate", "Noisy"].map((noise) => (
+            {NOISE_FILTERS.map((noise) => (
               <button
                 key={noise}
                 className={noiseFilter === noise ? "np-chip active" : "np-chip"}
@@ -311,141 +292,81 @@ export default function ExplorePage({ user, onLoginClick, onLogout }) {
         )}
 
         {!loading && !error && (
-          <section className="np-dashboard">
-            <div className="np-results">
-              <div className="np-section-title">
-                <div>
-                  <h2>Recommended Study Spaces</h2>
-                  <p>{filteredSpaces.length} spaces found</p>
-                </div>
-
-                <button className="np-refresh-btn" onClick={loadSpaces}>
-                  <RefreshCcw size={16} />
-                  Refresh
-                </button>
-              </div>
-
-              <div className="np-card-grid">
-                {filteredSpaces.map((space) => (
-                  <article className="np-study-card" key={space.id}>
-                    <div className="np-card-header">
-                      <div>
-                        <h3>{space.name}</h3>
-                        <p>{space.building}</p>
-                      </div>
-
-                      <span className={`np-status ${getStatusClass(space)}`}>
-                        {getOpenStatus(space)}
-                      </span>
-                    </div>
-
-                    <p className="np-description">
-                      {space.description ||
-                        "A campus study space for focused learning."}
-                    </p>
-
-                    <div className="np-metrics">
-                      <div>
-                        <Volume2 size={18} />
-                        <span>Noise</span>
-                        <strong>{getNoiseStatus(space)}</strong>
-                      </div>
-
-                      <div>
-                        <Users size={18} />
-                        <span>Crowd</span>
-                        <strong>{getCrowdStatus(space)}</strong>
-                      </div>
-
-                      <div>
-                        <MapPin size={18} />
-                        <span>Faculty</span>
-                        <strong>{displayFaculty(space.faculty)}</strong>
-                      </div>
-
-                      <div>
-                        <CheckCircle size={18} />
-                        <span>Type</span>
-                        <strong>{space.spot_type || "Study space"}</strong>
-                      </div>
-                    </div>
-
-                    <div className="np-amenities">
-                      {space.has_power && (
-                        <span>
-                          <Zap size={14} />
-                          Power
-                        </span>
-                      )}
-
-                      {space.has_aircon && (
-                        <span>
-                          <AirVent size={14} />
-                          Aircon
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="np-card-actions">
-                      <button className="np-card-primary">View Details</button>
-                      <button
-                        className="np-card-secondary"
-                        onClick={() => handleQuickFeedback(space)}
-                      >
-                        Report Status
-                      </button>
-                    </div>
-                  </article>
-                ))}
+          <>
+            <div className="np-results-header">
+              <div>
+                <h3>Recommended Study Spaces</h3>
+                <p>{filteredSpaces.length} spaces found</p>
               </div>
             </div>
 
-            <aside className="np-sidebar">
-              <div className="np-side-card">
-                <h3>Best current match</h3>
-                <p>Recommended based on quietness score and your filters.</p>
+            <section className="np-card-grid">
+              {filteredSpaces.map((space) => (
+                <article className="np-study-card compact" key={space.id}>
+                  <div className="np-card-top">
+                    <div className="np-card-title-block">
+                      <h4>{space.name}</h4>
+                      <p>{space.building}</p>
+                    </div>
 
-                {bestMatch ? (
-                  <div className="np-best-box">
-                    <h4>{bestMatch.name}</h4>
-                    <p>{bestMatch.building}</p>
-                    <span>{getNoiseStatus(bestMatch)}</span>
+                    <span className={`np-status ${getStatusClass(space)}`}>
+                      {getOpenStatus(space)}
+                    </span>
                   </div>
-                ) : (
-                  <div className="np-best-box">
-                    <h4>No match found</h4>
-                    <p>Try changing the filters.</p>
+
+                  <div className="np-card-meta">
+                    <span>
+                      <Volume2 size={14} />
+                      {getNoiseStatus(space)}
+                    </span>
+
+                    <span>
+                      <Users size={14} />
+                      Crowd {getCrowdStatus(space)}
+                    </span>
+
+                    <span>
+                      <CheckCircle size={14} />
+                      {space.spot_type || "Study space"}
+                    </span>
                   </div>
-                )}
-              </div>
 
-              <div className="np-side-card">
-                <h3>Interactive map</h3>
-                <p>Map view placeholder showing nearby study spots.</p>
+                  <div className="np-card-submeta">
+                    <span>
+                      <MapPin size={14} />
+                      {displayFaculty(space.faculty)}
+                    </span>
+                  </div>
 
-                <div className="np-map-box">
-                  <span className="np-pin pin1"></span>
-                  <span className="np-pin pin2"></span>
-                  <span className="np-pin pin3"></span>
-                  <span className="np-pin pin4"></span>
-                </div>
-              </div>
+                  <div className="np-amenities">
+                    {space.has_power && (
+                      <span>
+                        <Zap size={12} />
+                        Power
+                      </span>
+                    )}
 
-              <div className="np-side-card">
-                <h3>User feedback</h3>
-                <p>
-                  Help improve live data by reporting if a space is quiet,
-                  crowded, or conducive.
-                </p>
+                    {space.has_aircon && (
+                      <span>
+                        <AirVent size={12} />
+                        Aircon
+                      </span>
+                    )}
+                  </div>
 
-                {!user && (
-                  <button className="np-login-prompt" onClick={onLoginClick}>
-                    Login to submit feedback
-                  </button>
-                )}
-              </div>
-            </aside>
-          </section>
+                  <div className="np-card-actions">
+                    <button className="np-card-primary">View Details</button>
+                    <button
+                      className="np-card-secondary"
+                      onClick={() => handleQuickFeedback(space)}
+                    >
+                      Report Status
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </section>
+          </>
         )}
       </main>
     </div>

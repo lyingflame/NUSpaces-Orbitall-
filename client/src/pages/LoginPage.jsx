@@ -2,7 +2,7 @@ import { useState } from "react";
 import { apiRequest } from "../services/api";
 
 export default function LoginPage({ onLogin, onBack }) {
-  const [mode, setMode] = useState("login"); // "login" or "register"
+  const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
@@ -65,6 +65,7 @@ export default function LoginPage({ onLogin, onBack }) {
         )}
 
         <h1>NUSpaces</h1>
+
         <p className="loginSubtext">
           {mode === "login"
             ? "Login to your account"
@@ -119,7 +120,7 @@ export default function LoginPage({ onLogin, onBack }) {
           {mode === "login"
             ? "Don't have an account?"
             : "Already have an account?"}{" "}
-          <button onClick={switchMode}>
+          <button type="button" onClick={switchMode}>
             {mode === "login" ? "Register here" : "Login here"}
           </button>
         </p>
