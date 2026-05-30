@@ -1,27 +1,31 @@
 {
   "name": "nuspaces",
   "version": "1.0.0",
-  "description": "NUSpaces Web App",
-  "main": "server/index.js",
+  "description": "A study spot recommendation web app for NUS students",
   "scripts": {
-    "start": "node server/index.js",
-    "dev": "nodemon server/index.js",
-    "db:migrate": "node database/migrations/runMigrations.js",
-    "db:seed": "node database/seeds/seedData.js"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "client": "npm run dev --prefix client",
+    "server": "npm run dev --prefix server",
+    "client-install": "npm install --prefix client",
+    "server-install": "npm install --prefix server",
+    "install-all": "npm run client-install && npm run server-install",
+    "db:migrate": "node server/scripts/runMigrations.js",
+    "db:seed": "node server/scripts/seedData.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lyingflame/NUSpaces-Orbitall-.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/lyingflame/NUSpaces-Orbitall-/issues"
+  },
+  "homepage": "https://github.com/lyingflame/NUSpaces-Orbitall-#readme",
   "dependencies": {
-    "bcrypt": "^6.0.0",
-    "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "express-rate-limit": "^8.5.2",
-    "helmet": "^8.2.0",
-    "jsonwebtoken": "^9.0.3",
-    "node-cron": "^4.2.1",
-    "nodemon": "^3.1.14",
-    "pg": "^8.21.0"
+    "concurrently": "^10.0.0"
   }
 }

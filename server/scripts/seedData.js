@@ -3,8 +3,8 @@ const path = require('path');
 const bcrypt = require('bcrypt');
 const dotenv = require('dotenv');
 
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
-const { pool } = require('../../server/config/database');
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+const { pool } = require('../config/database');
 
 const studySpots = [
   {
@@ -245,6 +245,7 @@ const exampleFeedback = [
 async function seed() {
   try {
     // Remove existing data
+    await pool.query('DELETE FROM refresh_tokens');
     await pool.query('DELETE FROM spot_schedule_overrides');
     await pool.query('DELETE FROM spot_schedules');
     await pool.query('DELETE FROM spot_scores');

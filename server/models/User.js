@@ -3,15 +3,27 @@
 const { query } = require('../config/database');
 
 const User = {
-  // Add new user
+  // Register user
   async create(email, username, passwordHash) {
-    const result = await query(
-      `INSERT INTO users (email, username, password_hash)
-       VALUES ($1, $2, $3)
-       RETURNING id, email, username, created_at`,
-      [email, username, passwordHash]
-    );
-    return result.rows[0];
+    try {
+      const result = await query(
+        `INSERT INTO users (email, username, password_hash)
+         VALUES ($1, $2, $3)
+         RETURNING id, email, username, created_at`,
+        [email, username, passwordHash]
+      );
+      return result.rows[0];
+    } catch (err) {
+      if (err.code === "23505") { // Not unique
+        if (err.constraint === "users_username_key") {
+          throw new Error("Username has been taken.");
+        }
+        if (err.constraint === "users_email_key") {
+          throw new Error("Email is already registered.");
+        }
+      }
+      throw err;
+    }
   },
 
   // Get user by email

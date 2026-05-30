@@ -84,6 +84,16 @@ CREATE TABLE IF NOT EXISTS spot_scores (
     last_updated        TIMESTAMP DEFAULT NOW()
 );
 
+-- Refresh tokens table (JWT)
+-- Active refresh tokens for user sessions, with access token being 15 min and not stored while refresh tokens are 7 days and revoked on logout
+CREATE TABLE IF NOT EXISTS refresh_tokens (
+    id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id         INT REFERENCES users(id) ON DELETE CASCADE,
+    token           VARCHAR(500) UNIQUE NOT NULL,
+    expires_at      TIMESTAMP NOT NULL,
+    created_at      TIMESTAMP DEFAULT NOW()
+);
+
 -- Indexes
 
 -- for feedback queries
@@ -97,3 +107,11 @@ CREATE INDEX IF NOT EXISTS idx_feedback_time_of_day
 -- for spam prevention (in feedbackService)
 CREATE INDEX IF NOT EXISTS idx_feedback_user_spot
     ON feedback(user_id, spot_id, created_at DESC);
+
+-- for looking up tokens
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token
+    ON refresh_tokens(token);
+
+-- for finding all tokens by user (auth/logout)
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user
+    ON refresh_tokens(user_id);

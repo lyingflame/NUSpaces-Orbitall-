@@ -6,7 +6,7 @@ const authLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, // cooldown: 10 min
   max: 5,
   message: {
-    error: 'Too many authentication attempts. Please try again in 10 minutes.',
+    error: 'Too many login attempts. Please try again in 10 minutes.',
   },
   standardHeaders: true,
   legacyHeaders: false,

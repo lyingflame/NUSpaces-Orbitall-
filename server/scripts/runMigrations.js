@@ -4,12 +4,12 @@ const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
 
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
-const { pool } = require('../../server/config/database');
+const { pool } = require('../config/database');
 
 async function runMigrations() {
-  const migrationDir = path.resolve(__dirname);
+  const migrationDir = path.resolve(__dirname, '../../database');
   const files = fs.readdirSync(migrationDir)
     .filter(f => f.endsWith('.sql'))
     .sort();
