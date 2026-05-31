@@ -58,7 +58,7 @@ POST /api/auth/register
 
 ### Login
 
-Users can log in with their email and password.
+Users can log in with their email and password. Logged in users are able to submit feedback.
 
 Required fields:
 1. Email
@@ -69,7 +69,7 @@ API Used:
 POST /api/auth/login
 ```
 
-#### Logout
+### Logout
 
 The user is able to log out of their account and end the session. This clears the authentication cookies and revokes the refresh token in the database so it cannot be reused or leaked.
 
@@ -78,7 +78,7 @@ API Used:
 POST /api/auth/logout
 ```
 
-#### Login Page  
+### Login Page  
 
 * User can log in with valid backend account
 * User can switch to Register mode
@@ -99,8 +99,6 @@ Passwords are hashed using bcrypt before being stored in the database. Plain-tex
 #### Zod 
 
 All HTTP request data is validated using Zod schemas before reaching the controllers. Zod is used to enforce type checking, string constraints, and requirements (such as password length requirement and NUS email domain validation), and sanitises all text inputs by trimming whitespace and normalizing email casing. Invalid requests are rejected and specified error messages are given back to the client (such as “Invalid password” or “Username is taken”).
-
-—  
 
 ## 2. Real-time Scoring Algorithm
 
@@ -125,7 +123,7 @@ The algorithm only considers feedback submitted within a configurable time windo
 
 Scores are recalculated in two ways:
 1. **Every 15 minutes** via a scheduled CRON job
-2. **Automatically** whenever a student submits new feedback for a spot
+2. **Automatically updates** whenever a student submits new feedback for a spot
 
 ## 3. Status Display
 
@@ -344,8 +342,8 @@ The backend runs on `http://localhost:5000` and the frontend on `http://localhos
 
 # Project Information
 
-**Project ID: 6843**
-**Project Name: NUSpaces**
+**Project ID: 6843**  
+**Project Name: NUSpaces**  
 
 ## Team Members 
 
