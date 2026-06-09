@@ -1,6 +1,8 @@
 // Backend server API 
 const path = require('path');
 const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
 const cors = require('cors');
 const helmet = require('helmet');
 const dotenv = require('dotenv');
@@ -18,6 +20,16 @@ const RefreshToken = require('./models/RefreshToken');
 
 const app = express();
 const PORT = process.env.PORT; 
+
+// HTTP: Express Server with socket.io attached for web socket
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: process.env.CLIENT_URL,
+    credentials: true,
+  },
+});
+app.set('io', io); // req.app.get('io')
 
 // Security
 app.use(helmet());
@@ -37,6 +49,15 @@ app.use('/api/feedback', require('./routes/feedbackRoutes'));
 // Health check (debugging)
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Socket.io log (debugging)
+io.on('connection', (socket) => {
+  console.log(`[WEB SOCKET] User connected: ${socket.id}`);
+
+  socket.on('disconnect', () => {
+    console.log(`[WEB SOCKET] User disconnected: ${socket.id}`);
+  });
 });
 
 // CRON: Update scores every 15 minutes
@@ -81,8 +102,8 @@ async function startServer() {
     console.error('Initial score calculation failed:', error.message);
   }
 
-  app.listen(PORT, () => {
-    console.log(`NUSpaces API running on http://localhost:${PORT}`);
+  server.listen(PORT, () => {
+    console.log(`NUSpaces API (with socket.io) running on http://localhost:${PORT}`);
   });
 }
 

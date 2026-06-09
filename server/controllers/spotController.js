@@ -41,10 +41,11 @@ const spotController = {
     }
   },
 
-  // POST /api/spots/refresh (to recalculate all scores)
+  // POST /api/spots/refresh (recalculate and broadcast with socket.io)
   async refreshScores(req, res, next) {
     try {
-      await scoringService.recalculateAllScores();
+      const io = req.app.get('io');
+      await scoringService.recalculateAllScores(io);
 
       // get spots with updated scores
       const now = new Date();

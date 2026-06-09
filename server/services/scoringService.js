@@ -22,7 +22,7 @@ const TIME_WINDOW_HOURS = 12;   // +- 1 hour time window (currently disabled)
 const RECENT_HOURS = 6;        
 
 const scoringService = {
-  async computeScore(spotId, currentTime) {
+  async computeScore(spotId, currentTime, io = null) {
     if (!currentTime) {
       currentTime = new Date().toTimeString().slice(0, 5);
     }
@@ -40,11 +40,23 @@ const scoringService = {
       score.reportCount,
       score.recentReportCount
     );
+
+    // Real-time update event (socket.io)
+    if (io) {
+      io.emit('score-updated', {
+        spotId,
+        quietnessScore: score.quietnessScore,
+        avgCrowd: score.avgCrowd,
+        noiseStatus: score.status,
+        reportCount: score.reportCount,
+        recentReportCount: score.recentReportCount,
+      });
+    }
     return score;
   },
 
   // Recalculate all scores (used by CRON schedule)
-  async recalculateAllScores() {
+  async recalculateAllScores(io = null) {
     const currentTime = new Date().toTimeString().slice(0, 5);
 
     const allFeedback = await Feedback.getAllByTimeWindow(currentTime, TIME_WINDOW_HOURS);
@@ -66,6 +78,11 @@ const scoringService = {
         score.reportCount,
         score.recentReportCount
       );
+    }
+
+    // Refresh event (socket.io)
+    if (io) {
+      io.emit('scores-refreshed', { time: currentTime, spotsUpdated: allSpotIds.length });
     }
     return { spotsUpdated: allSpotIds.length, time: currentTime };
   },

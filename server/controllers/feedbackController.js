@@ -29,9 +29,10 @@ const feedbackController = {
 
       const feedback = await Feedback.create(userId, spotId, noiseLevel, crowdLevel, comment);
 
-      // Recalculate score
+      // Recalculate score and broadcast via socket.io
       const currentTime = new Date().toTimeString().slice(0, 5);
-      const updatedScore = await scoringService.computeScore(spotId, currentTime);
+      const io = req.app.get('io');
+      const updatedScore = await scoringService.computeScore(spotId, currentTime, io);
 
       res.status(201).json({ feedback, updatedScore });
     } catch (error) {
