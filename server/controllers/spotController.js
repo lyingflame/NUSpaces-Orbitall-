@@ -6,7 +6,7 @@ const Schedule = require('../models/Schedule');
 const scoringService = require('../services/scoringService');
 
 const spotController = {
-  // GET /api/spots (all spots data)
+  // GET /api/spots
   async getAllSpots(req, res, next) {
     try {
       const now = new Date();
@@ -14,9 +14,25 @@ const spotController = {
       const today = now.toISOString().slice(0, 10);
       const dayType = getDayType(now);
 
+      // Filter options: search, building, faculty, spot type, power, aircon, noise category, latitude, longitude, radius, sortBy
+      const filters = {
+        search:   req.query.search,
+        building: req.query.building,
+        faculty:  req.query.faculty,
+        spotType: req.query.spotType,
+        hasPower: req.query.hasPower,
+        hasAircon: req.query.hasAircon,
+        noise:    req.query.noise,
+        lat:      req.query.lat,
+        lng:      req.query.lng,
+        radius:   req.query.radius,
+        sortBy:   req.query.sortBy,
+      };
+      const hasFilters = Object.values(filters).some(v => v !== undefined);
+
       // get spots, schedules, overrides
       const [spots, allSchedules, todayOverrides] = await Promise.all([
-        StudySpot.getAllWithScores(),
+        hasFilters ? StudySpot.getFiltered(filters) : StudySpot.getAllWithScores(),
         Schedule.getAllSchedules(),
         Schedule.getAllOverridesForDate(today),
       ]);
@@ -35,7 +51,26 @@ const spotController = {
         };
       });
 
+      // Filter: Open locations only (can use with other filters)
+      if (req.query.openNow === 'true') {
+        result = result.filter(spot => spot.is_open);
+      }
+
       res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // GET /api/spots/filters (for category filtering: building, faculty, spot type)
+  async getFilterOptions(req, res, next) {
+    try {
+      const [buildings, faculties, types] = await Promise.all([
+        StudySpot.getDistinctBuildings(),
+        StudySpot.getDistinctFaculties(),
+        StudySpot.getDistinctTypes(),
+      ]);
+      res.status(200).json({ buildings, faculties, types });
     } catch (error) {
       next(error);
     }
