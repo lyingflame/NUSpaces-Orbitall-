@@ -22,7 +22,7 @@ const StudySpot = {
     const params = [];
     let idx = 1;
 
-    // Filter: Name search
+    // Filter: Name search (name, building or faculty)
     if (filters.search) {
       conditions.push(
         `(LOWER(s.name) LIKE $${idx} OR LOWER(s.building) LIKE $${idx} 
@@ -73,16 +73,18 @@ const StudySpot = {
         params.push(range[0], range[1]);
       }
     }
-    
+
     const whereClause = conditions.length > 0
       ? 'WHERE ' + conditions.join(' AND ')
       : '';
 
     let distanceSelect = '';
-    let distanceHaving = '';
-    let orderClause = 'ORDER BY sc.quietness_score ASC NULLS LAST';
+    let orderClause = 'ORDER BY sc.quietness_score ASC NULLS LAST'; // default: sort by quietness
+    let distanceFilter = false;
+    let radiusValue = 0;
 
-    // Filter: Location distance (if user location provided, else default is sort by quietness)
+    // Filter: Location distance
+    // If user location is provided (lat & lng), then sort by distance
     if (filters.lat && filters.lng) {
       const lat = parseFloat(filters.lat);
       const lng = parseFloat(filters.lng);
@@ -95,13 +97,10 @@ const StudySpot = {
           + sin(radians(${lat})) * sin(radians(s.latitude)))
         )) AS distance_km`;
 
-      // Filter by radius (in km)
+      // Filter by proximity (radius around user in km)
       if (filters.radius) {
-        distanceHaving = `HAVING (6371 * acos(
-          LEAST(1.0, cos(radians(${lat})) * cos(radians(s.latitude))
-          * cos(radians(s.longitude) - radians(${lng}))
-          + sin(radians(${lat})) * sin(radians(s.latitude)))
-        )) <= ${parseFloat(filters.radius)}`;
+        distanceFilter = true;
+        radiusValue = parseFloat(filters.radius);
       }
       orderClause = 'ORDER BY distance_km ASC';
     }
@@ -115,17 +114,17 @@ const StudySpot = {
       orderClause = 'ORDER BY s.name ASC';
     }
 
-    const sql = `
+    const innerSql = `
       SELECT s.*,
              sc.quietness_score, sc.avg_noise, sc.avg_crowd,
              sc.report_count, sc.recent_report_count, sc.last_updated
              ${distanceSelect}
       FROM study_spots s
       LEFT JOIN spot_scores sc ON s.id = sc.spot_id
-      ${whereClause}
-      ${distanceHaving}
-      ${orderClause}`;
+      ${whereClause}`;
 
+    // Wrap inner sql if distance filter applied
+    const sql = distanceFilter ? `SELECT * FROM (${innerSql}) AS spots WHERE distance_km <= ${radiusValue} ${orderClause}` : `${innerSql} ${orderClause}`;
     const result = await query(sql, params);
     return result.rows;
   },
@@ -148,6 +147,29 @@ const StudySpot = {
   async getAllIds() {
     const result = await query('SELECT id FROM study_spots');
     return result.rows.map(row => row.id);
+  },
+
+  // Get filter dropdown options (building, faculty & spot types)
+  async getBuildings() {
+    const result = await query(
+      'SELECT DISTINCT building FROM study_spots WHERE building IS NOT NULL ORDER BY building'
+    );
+    return result.rows.map(row => row.building);
+  },
+
+  async getFaculties() {
+    const result = await query(
+      `SELECT DISTINCT UNNEST(faculty) AS faculty
+       FROM study_spots WHERE faculty IS NOT NULL ORDER BY faculty`
+    );
+    return result.rows.map(row => row.faculty);
+  },
+
+  async getTypes() {
+    const result = await query(
+      'SELECT DISTINCT spot_type FROM study_spots WHERE spot_type IS NOT NULL ORDER BY spot_type'
+    );
+    return result.rows.map(row => row.spot_type);
   },
 };
 

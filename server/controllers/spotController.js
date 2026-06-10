@@ -37,7 +37,7 @@ const spotController = {
         Schedule.getAllOverridesForDate(today),
       ]);
 
-      const result = spots.map(spot => {
+      let result = spots.map(spot => {
         const override = todayOverrides[spot.id];
         const schedule = allSchedules[spot.id]?.[dayType];
         const status = getOpeningStatus(override, schedule, currentTime);
@@ -66,9 +66,9 @@ const spotController = {
   async getFilterOptions(req, res, next) {
     try {
       const [buildings, faculties, types] = await Promise.all([
-        StudySpot.getDistinctBuildings(),
-        StudySpot.getDistinctFaculties(),
-        StudySpot.getDistinctTypes(),
+        StudySpot.getBuildings(),
+        StudySpot.getFaculties(),
+        StudySpot.getTypes(),
       ]);
       res.status(200).json({ buildings, faculties, types });
     } catch (error) {
