@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ArrowLeft, LogIn, UserPlus } from "lucide-react";
 import { apiRequest } from "../services/api";
 
 export default function LoginPage({ onLogin, onBack }) {
@@ -40,11 +41,12 @@ export default function LoginPage({ onLogin, onBack }) {
         body: JSON.stringify(body),
       });
 
-      localStorage.setItem("nuspacesUser", JSON.stringify(data.user));
+      const loggedInUser = data.user || data.data?.user || data;
 
-      onLogin(data.user);
+      localStorage.setItem("nuspacesUser", JSON.stringify(loggedInUser));
+      onLogin(loggedInUser);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Unable to continue.");
     } finally {
       setLoading(false);
     }
@@ -60,17 +62,25 @@ export default function LoginPage({ onLogin, onBack }) {
       <div className="simpleLoginCard">
         {onBack && (
           <button className="backButton" onClick={onBack}>
-            ← Back to Explore
+            <ArrowLeft size={15} />
+            Back to Explore
           </button>
         )}
 
-        <h1>NUSpaces</h1>
+        <div className="loginLogo">
+          <div className="np-logo-mark">
+            <span>NS</span>
+          </div>
+          <div>
+            <h1>NUSpaces</h1>
+            <p>Campus study spaces, updated live</p>
+          </div>
+        </div>
 
-        <p className="loginSubtext">
-          {mode === "login"
-            ? "Login to your account"
-            : "Create a new NUSpaces account"}
-        </p>
+        <div className="loginModeBadge">
+          {mode === "login" ? <LogIn size={14} /> : <UserPlus size={14} />}
+          {mode === "login" ? "Welcome back" : "Create account"}
+        </div>
 
         <form onSubmit={handleSubmit} className="simpleLoginForm">
           {mode === "register" && (
@@ -86,7 +96,7 @@ export default function LoginPage({ onLogin, onBack }) {
           )}
 
           <div className="formGroup">
-            <label>Email</label>
+            <label>NUS Email</label>
             <input
               type="email"
               placeholder="e.g. e1234567@u.nus.edu"

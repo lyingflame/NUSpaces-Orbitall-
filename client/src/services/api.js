@@ -4,11 +4,11 @@ const API_BASE_URL =
 export async function apiRequest(endpoint, options = {}) {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...options.headers,
     },
-    credentials: "include",
   });
 
   const text = await response.text();
@@ -18,14 +18,6 @@ export async function apiRequest(endpoint, options = {}) {
     data = text ? JSON.parse(text) : null;
   } catch {
     data = { message: text };
-  }
-
-  if (response.status === 401 && data?.code === "TOKEN_EXPIRED") {
-    const refreshed = await refreshToken();
-
-    if (refreshed) {
-      return apiRequest(endpoint, options);
-    }
   }
 
   if (!response.ok) {
@@ -38,17 +30,4 @@ export async function apiRequest(endpoint, options = {}) {
   }
 
   return data;
-}
-
-async function refreshToken() {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
-      method: "POST",
-      credentials: "include",
-    });
-
-    return response.ok;
-  } catch {
-    return false;
-  }
 }
