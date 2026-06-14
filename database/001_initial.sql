@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
     email           VARCHAR(255) UNIQUE NOT NULL,
     username        VARCHAR(100) UNIQUE NOT NULL,
     password_hash   VARCHAR(255) NOT NULL,
+    role            VARCHAR(20) DEFAULT 'user' CHECK (role IN ('user', 'admin')),
     preferences     JSONB DEFAULT '{}',
     created_at      TIMESTAMP DEFAULT NOW()
 );

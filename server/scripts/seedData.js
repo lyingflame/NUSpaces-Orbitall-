@@ -257,12 +257,21 @@ async function seed() {
     // Add test user (debugging)
     const passwordHash = await bcrypt.hash('password123', 12);
     const userResult = await pool.query(
-      `INSERT INTO users (email, username, password_hash)
-       VALUES ('e1234567@u.nus.edu', 'alextan', $1) RETURNING id`,
+      `INSERT INTO users (email, username, password_hash, role)
+       VALUES ('e1234567@u.nus.edu', 'alextan', $1, 'user') RETURNING id`,
       [passwordHash]
     );
     const testUserId = userResult.rows[0].id;
     console.log('  Created test user: e1234567@u.nus.edu / password123\n');
+
+    // Add admin user (debugging)
+    const adminHash = await bcrypt.hash('admin123', 12);
+    await pool.query(
+      `INSERT INTO users (email, username, password_hash, role)
+      VALUES ('admin@u.nus.edu', 'admin', $1, 'admin')`,
+      [adminHash]
+    );
+    console.log('  Created admin user: admin@u.nus.edu / admin123\n');
 
     // Add study spots
     const spotNameToId = {};
@@ -359,7 +368,7 @@ async function seed() {
     }
     console.log('');
 
-    console.log(`Seeded ${studySpots.length} spots, ${feedbackCount} feedback, ${overrides.length} overrides, 1 test user.`);
+    console.log(`Seeded ${studySpots.length} spots, ${feedbackCount} feedback, ${overrides.length} overrides, 2 test users.`);
     await pool.end();
   } catch (error) {
     console.error('Seeding failed:', error.message);

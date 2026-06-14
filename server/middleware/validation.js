@@ -80,9 +80,76 @@ function validate(schema) {
     next();
   };
 }
- 
+
+// Admin: add new study spot
+const addSpotSchema = z.object({
+  name: z.string({ required_error: 'Name is required.' }).min(1).max(255),
+  building: z.string().max(255).optional(),
+  faculty: z.array(z.string()).optional(),
+  spotType: z.enum(['library', 'study_room', 'outdoor', 'lounge', 'lab']).optional(),
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
+  capacity: z.number().int().positive().optional(),
+  hasPower: z.boolean().optional().default(false),
+  hasAircon: z.boolean().optional().default(true),
+  description: z.string().max(1000).optional().default(''),
+});
+
+// Admin: update study spot (all fields optional)
+const updateSpotSchema = addSpotSchema.partial();
+
+// Admin: Change study spot schedule (can be null)
+const scheduleSchema = z.object({
+  spotId: z.number({ required_error: 'Spot ID required.' }).int(),
+  dayOfWeek: z.enum(['weekday', 'saturday', 'sunday'], {
+    required_error: 'Day of week required.',
+  }),
+  // set as 24h, closed or change in open/close time
+  openingTime: z.string().regex(/^\d{2}:\d{2}$/, 'Time must be HH:MM.').optional(),
+  closingTime: z.string().regex(/^\d{2}:\d{2}$/, 'Time must be HH:MM.').optional(),
+  is24hr: z.boolean().optional().default(false),
+  isClosed: z.boolean().optional().default(false),
+});
+
+// Admin: Add new study spot override
+const addOverrideSchema = z.object({
+  spotId: z.number({ required_error: 'Spot ID is required.' }).int(),
+  startDate: z.string({ required_error: 'Start date is required.' })
+    .regex(/^\d{2}-\d{2}-\d{4}$/, 'Date must be YYYY-MM-DD.'),
+  endDate: z.string({ required_error: 'End date is required.' })
+    .regex(/^\d{2}-\d{2}-\d{4}$/, 'Date must be YYYY-MM-DD.'),
+  openingTime: z.string().regex(/^\d{2}:\d{2}$/, 'Time must be HH:MM.').optional(),
+  closingTime: z.string().regex(/^\d{2}:\d{2}$/, 'Time must be HH:MM.').optional(),
+  is24hr: z.boolean().optional().default(false),
+  isClosed: z.boolean().optional().default(false),
+  reason: z.string().max(500).optional(),
+}).refine(
+  data => data.endDate >= data.startDate,
+  { message: 'End date must be on or after start date.' }
+);
+
+// Admin: Update existing override
+const updateOverrideSchema = z.object({
+  spotId: z.number().int().optional(),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD.').optional(),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD.').optional(),
+  openingTime: z.string().regex(/^\d{2}:\d{2}$/, 'Time must be HH:MM.').optional(),
+  closingTime: z.string().regex(/^\d{2}:\d{2}$/, 'Time must be HH:MM.').optional(),
+  is24hr: z.boolean().optional(),
+  isClosed: z.boolean().optional(),
+  reason: z.string().max(500).optional(),
+});
+
+// 8 exports
 const validateRegistration = validate(registerSchema);
 const validateLogin = validate(loginSchema);
 const validateFeedback = validate(feedbackSchema);
+const validateAddSpot = validate(addSpotSchema);
+const validateUpdateSpot = validate(updateSpotSchema);
+const validateSchedule = validate(scheduleSchema);
+const validateAddOverride = validate(addOverrideSchema);
+const validateUpdateOverride = validate(updateOverrideSchema);
  
-module.exports = { validateRegistration, validateLogin, validateFeedback };
+module.exports = { 
+  validateRegistration, validateLogin, validateFeedback, validateAddSpot, validateUpdateSpot, validateSchedule, validateAddOverride, validateUpdateOverride,
+};
