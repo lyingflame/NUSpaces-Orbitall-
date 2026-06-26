@@ -5,70 +5,97 @@ const dotenv = require('dotenv');
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 const { pool } = require('../config/database');
+const { generateFeedback } = require('./generateFeedback');
 
+// Study Spots: 45
 const studySpots = [
+  // NUS Libraries: 12
+  {
+    name: 'Central Library Level 1', building: 'Central Library',
+    faculty: ['University'], spot_type: 'lounge',
+    latitude: 1.2966, longitude: 103.7732, capacity: 40,
+    has_power: true, has_aircon: true,
+    description: 'Casual study area near Maxx Coffee (NUS Coop) and Soup Spoon. New book displays and consultation desks.',
+    schedule: { weekday: ['09:00','21:00'], saturday: 'closed', sunday: 'closed' },
+  },
   {
     name: 'Central Library Level 3', building: 'Central Library',
     faculty: ['University'], spot_type: 'library',
     latitude: 1.2966, longitude: 103.7732, capacity: 200,
     has_power: true, has_aircon: true,
-    description: 'Quiet floors with individual study desks and power outlets.',
+    description: 'Quiet area with individual study desks, multimedia workstations and power outlets.',
+    schedule: { weekday: ['09:00','21:00'], saturday: 'closed', sunday: 'closed' },
+  },
+  {
+    name: 'Central Library Level 4 Discussion Rooms', building: 'Central Library',
+    faculty: ['University'], spot_type: 'study_room',
+    latitude: 1.2966, longitude: 103.7732, capacity: 80,
+    has_power: true, has_aircon: true,
+    description: 'Soundproof group discussion rooms with smart whiteboards and video conferencing. Booking required, which can be done via uNivUS.',
+    schedule: { weekday: ['09:00','21:00'], saturday: 'closed', sunday: 'closed' },
+  },
+  {
+    name: 'Central Library Level 5', building: 'Central Library',
+    faculty: ['University'], spot_type: 'library',
+    latitude: 1.2966, longitude: 103.7732, capacity: 150,
+    has_power: true, has_aircon: true,
+    description: 'Quiet study zone above Level 4. Strict noise management enforced, ideal for reading and thesis writing.',
     schedule: { weekday: ['09:00','21:00'], saturday: 'closed', sunday: 'closed' },
   },
   {
     name: 'Central Library Level 6 Reading Area', building: 'Central Library',
     faculty: ['University'], spot_type: 'library',
-    latitude: 1.2965, longitude: 103.7731, capacity: 60, 
+    latitude: 1.2965, longitude: 103.7731, capacity: 60,
     has_power: true, has_aircon: true,
-    description: 'Group reading area with whiteboards and flexible seating.',
+    description: 'Study area with individual cubicles with access via NUS card. Extended to 24/7 during exam periods.',
     schedule: { weekday: ['09:00','21:00'], saturday: ['10:00','17:00'], sunday: 'closed' },
   },
   {
     name: 'Hon Sui Sen Memorial Library', building: 'Hon Sui Sen Memorial Library',
     faculty: ['Business'], spot_type: 'library',
-    latitude: 1.2931, longitude: 103.7746, capacity: 150, 
+    latitude: 1.2931, longitude: 103.7746, capacity: 150,
     has_power: true, has_aircon: true,
-    description: 'Business school library with quiet individual study areas.',
+    description: 'Business school library with quiet individual study areas. Financial data terminals and case discussion rooms available.',
     schedule: { weekday: ['08:00','22:00'], saturday: ['08:00','18:30'], sunday: 'closed' },
   },
   {
     name: 'Medicine+Science Library L1 Atrium', building: 'Medicine+Science Library',
-    faculty: ["Medicine", "Science"], spot_type: 'library',
-    latitude: 1.2970, longitude: 103.7814, capacity: 20, 
+    faculty: ['Medicine', 'Science'], spot_type: 'library',
+    latitude: 1.2970, longitude: 103.7814, capacity: 20,
     has_power: true, has_aircon: true,
-    description: 'Quiet study spot near main entrance of Medicine+Science Library. Limited seats available.',
+    description: 'Quiet study spot near main entrance that is open 24/7. Good Day Cafe nearby for food and coffee. ',
     schedule: { weekday: '24hr', saturday: '24hr', sunday: '24hr' },
   },
   {
     name: 'Medicine+Science Library L2 Study Area', building: 'Medicine+Science Library',
-    faculty: ["Medicine", "Science"], spot_type: 'library',
-    latitude: 1.2970, longitude: 103.7814, capacity: 60, 
+    faculty: ['Medicine', 'Science'], spot_type: 'library',
+    latitude: 1.2970, longitude: 103.7814, capacity: 60,
     has_power: true, has_aircon: true,
-    description: 'Quiet library study area in the Science block with flexible seating.',
+    description: 'Quiet library study area near Frontier Canteen with flexible seating. Open 24/7.',
     schedule: { weekday: '24hr', saturday: '24hr', sunday: '24hr' },
   },
   {
     name: 'Medicine+Science Library L3 Quiet Study 01', building: 'Medicine+Science Library',
-    faculty: ["Medicine", "Science"], spot_type: 'library',
-    latitude: 1.2970, longitude: 103.7814, capacity: 60, 
+    faculty: ['Medicine', 'Science'], spot_type: 'library',
+    latitude: 1.2970, longitude: 103.7814, capacity: 60,
     has_power: true, has_aircon: true,
-    description: 'Quiet library spot in the Science block with individual cubicles.',
+    description: 'Quiet library spot with individual cubicles. Open 24/7 during term, closed during vacation.',
     schedule: { weekday: '24hr', saturday: '24hr', sunday: '24hr' },
   },
   {
     name: 'C J Koh Law Library', building: 'C J Koh Law Library',
     faculty: ['Law'], spot_type: 'library',
-    latitude: 1.3187, longitude: 103.8181, capacity: 100, 
+    latitude: 1.3187, longitude: 103.8181, capacity: 100,
     has_power: true, has_aircon: true,
-    description: 'Law library at Bukit Timah campus. Quiet environment with beautiful interior design.',
+    description: 'Law library at Bukit Timah campus. Very quiet environment with beautiful interior design. Angsana Room offers 24hr access.',
     schedule: { weekday: ['09:00','21:00'], saturday: ['10:00','17:00'], sunday: 'closed' },
   },
   {
     name: 'Music Library', building: 'Music Library',
     faculty: ['Music'], spot_type: 'library',
-    latitude: 1.3019, longitude: 103.7729, capacity: 100, 
+    latitude: 1.3019, longitude: 103.7729, capacity: 100,
     has_power: true, has_aircon: true,
-    description: 'Music library near NUS Museum. Very quiet environment with kind counter staff.',
+    description: 'Music library in Yong Siew Toh Conservatory near NUS Museum. Very quiet with kind counter staff.',
     schedule: { weekday: ['09:00','20:00'], saturday: 'closed', sunday: 'closed' },
   },
   {
@@ -76,9 +103,11 @@ const studySpots = [
     faculty: ['Arts & Social Sciences'], spot_type: 'library',
     latitude: 1.2970, longitude: 103.7733, capacity: 100,
     has_power: true, has_aircon: true,
-    description: 'Chinese library connected to Central library. Rich collection of books for Chinese and Japanese studies.',
+    description: 'Chinese Library connected to Central Library. Rich collection of books for Chinese and Japanese studies.',
     schedule: { weekday: ['09:00','20:00'], saturday: ['10:00','16:00'], sunday: 'closed' },
   },
+
+  // Computing: 4
   {
     name: 'COM1 Level 2 Study Area', building: 'COM1',
     faculty: ['Computing'], spot_type: 'study_room',
@@ -104,11 +133,21 @@ const studySpots = [
     schedule: null,
   },
   {
-    name: 'UTown Study Room (Education Resource Centre)', building: 'Education Resource Centre',
+    name: 'COM3 Study Area', building: 'COM3',
+    faculty: ['Computing'], spot_type: 'study_room',
+    latitude: 1.2935, longitude: 103.7747, capacity: 35,
+    has_power: true, has_aircon: true,
+    description: 'Study area near COM3 food court. Convenient for getting food between study sessions.',
+    schedule: null,
+  },
+
+  // UTown: 6
+  {
+    name: 'UTown The Study', building: 'Education Resource Centre',
     faculty: ['University'], spot_type: 'study_room',
     latitude: 1.3050, longitude: 103.7726, capacity: 100,
     has_power: true, has_aircon: true,
-    description: 'Large study area in UTown. Popular but generally quiet.',
+    description: 'Large study area at ERC Level 2. Generally quiet area with individual desks',
     schedule: { weekday: '24hr', saturday: '24hr', sunday: '24hr' },
   },
   {
@@ -119,6 +158,40 @@ const studySpots = [
     description: 'Casual seating near seminar rooms in Town Plaza. Background noise from foot traffic.',
     schedule: null,
   },
+  {
+    name: 'UTown Ferguson Study', building: 'Education Resource Centre',
+    faculty: ['University'], spot_type: 'study_room',
+    latitude: 1.3050, longitude: 103.7726, capacity: 50,
+    has_power: true, has_aircon: true,
+    description: 'Ian and Peony Ferguson Study at ERC Level 3. Quiet study environment.',
+    schedule: { weekday: ['08:00','22:00'], saturday: ['08:00','22:00'], sunday: ['08:00','22:00'] },
+  },
+  {
+    name: 'UTown PC Commons', building: 'Education Resource Centre',
+    faculty: ['University'], spot_type: 'lab',
+    latitude: 1.3050, longitude: 103.7726, capacity: 80,
+    has_power: true, has_aircon: true,
+    description: '24/7 Computer lab with Windows PCs. Highly booked during finals period. Reserve via Chope@NUS.',
+    schedule: { weekday: '24hr', saturday: '24hr', sunday: '24hr' },
+  },
+  {
+    name: 'UTown Mac Commons', building: 'Education Resource Centre',
+    faculty: ['University'], spot_type: 'lab',
+    latitude: 1.3050, longitude: 103.7726, capacity: 40,
+    has_power: true, has_aircon: true,
+    description: '24/7 Mac Computer Lab at ERC Level 1. Popular with design and media students.',
+    schedule: { weekday: '24hr', saturday: '24hr', sunday: '24hr' },
+  },
+  {
+    name: 'UTown Starbucks', building: 'Stephen Riady Centre',
+    faculty: ['University'], spot_type: 'lounge',
+    latitude: 1.3049, longitude: 103.7727, capacity: 30,
+    has_power: false, has_aircon: true,
+    description: 'Starbucks in UTown, open 24/7. May be crowded during lunch and dinner hours.',
+    schedule: { weekday: '24hr', saturday: '24hr', sunday: '24hr' },
+  },
+
+  // YIH: 3
   {
     name: 'YIH Study Room', building: 'Yusof Ishak House',
     faculty: ['University'], spot_type: 'study_room',
@@ -136,6 +209,26 @@ const studySpots = [
     schedule: null,
   },
   {
+    name: 'YIH NUSSU Student Lounge', building: 'Yusof Ishak House',
+    faculty: ['University'], spot_type: 'lounge',
+    latitude: 1.2988, longitude: 103.7750, capacity: 50,
+    has_power: true, has_aircon: true,
+    description: 'NUSSU Student Lounge at YIH Level 4. Spacious and air-conditioned.',
+    schedule: { weekday: ['08:00','22:00'], saturday: ['08:00','22:00'], sunday: 'closed' },
+  },
+
+  // Business: 1
+  {
+    name: 'BIZ2 Study Area', building: 'BIZ2',
+    faculty: ['Business'], spot_type: 'study_room',
+    latitude: 1.2929, longitude: 103.7743, capacity: 35,
+    has_power: true, has_aircon: true,
+    description: 'Study area near Business faculty. Shortcut through Imagen Holdings to reach Science.',
+    schedule: null,
+  },
+
+  // Arts & Social Sciences: 4
+  {
     name: 'AS8 Outdoor Tables', building: 'AS8',
     faculty: ['Arts & Social Sciences'], spot_type: 'outdoor',
     latitude: 1.2956, longitude: 103.7716, capacity: 20, 
@@ -144,12 +237,158 @@ const studySpots = [
     schedule: null,
   },
   {
+    name: 'AS7 Computer Lab', building: 'AS7',
+    faculty: ['Arts & Social Sciences'], spot_type: 'lab',
+    latitude: 1.2953, longitude: 103.7718, capacity: 30,
+    has_power: true, has_aircon: true,
+    description: 'Computer lab in AS7. Less crowded printing area compared to Central Library.',
+    schedule: { weekday: ['08:00','21:00'], saturday: ['08:00','17:00'], sunday: 'closed' },
+  },
+  {
+    name: 'The Deck Study Area', building: 'FASS',
+    faculty: ['Arts & Social Sciences'], spot_type: 'outdoor',
+    latitude: 1.2952, longitude: 103.7722, capacity: 40,
+    has_power: false, has_aircon: false,
+    description: 'Open area at The Deck near FASS canteen. Shortcut path to Computing and Business.',
+    schedule: null,
+  },
+  {
+    name: 'Maxx Coffee FASS', building: 'AS2',
+    faculty: ['Arts & Social Sciences'], spot_type: 'lounge',
+    latitude: 1.2955, longitude: 103.7720, capacity: 25,
+    has_power: false, has_aircon: true,
+    description: 'Cafe in FASS with food and drinks. Moderate background noise, good for casual study.',
+    schedule: { weekday: ['08:00','20:00'], saturday: ['08:00','18:00'], sunday: 'closed' },
+  },
+
+  // Engineering: 7
+  {
+    name: 'EA Level 1 Atrium', building: 'EA',
+    faculty: ['Design & Engineering'], spot_type: 'study_room',
+    latitude: 1.3005, longitude: 103.7709, capacity: 80,
+    has_power: true, has_aircon: true,
+    description: 'Air-conditioned atrium with vending machines. Near Engineering bus stop.',
+    schedule: null,
+  },
+  {
+    name: 'EA Level 4 Study Area', building: 'EA',
+    faculty: ['Design & Engineering'], spot_type: 'study_room',
+    latitude: 1.3005, longitude: 103.7709, capacity: 20,
+    has_power: true, has_aircon: true,
+    description: 'Less crowded upper level in EA building. Good alternative to the Level 1 Atrium.',
+    schedule: null,
+  },
+  {
     name: 'E3 Level 6 Study Area', building: 'E3',
     faculty: ['Design & Engineering'], spot_type: 'study_room',
     latitude: 1.2987, longitude: 103.7711, capacity: 35,
     has_power: true, has_aircon: true,
-    description: 'Study tables outside engineering lecture halls.',
+    description: 'Study tables outside engineering lecture halls. Cheers convenience store nearby.',
     schedule: { weekday: ['07:30','22:00'], saturday: ['07:30','22:00'], sunday: ['07:30','22:00'] },
+  },
+  {
+    name: 'E4 Study Area', building: 'E4',
+    faculty: ['Design & Engineering'], spot_type: 'study_room',
+    latitude: 1.2982, longitude: 103.7716, capacity: 30,
+    has_power: true, has_aircon: true,
+    description: 'Study area near Rise and Shine cafe and LT6. Convenient between engineering lectures.',
+    schedule: null,
+  },
+  {
+    name: 'E7 Study Area', building: 'E7',
+    faculty: ['Design & Engineering'], spot_type: 'study_room',
+    latitude: 1.2985, longitude: 103.7706, capacity: 30,
+    has_power: true, has_aircon: true,
+    description: 'Hidden gem near YIH and Huggs Coffee. About 6-8 long tables seating 4 each. 24/7 access via NUS card.',
+    schedule: null,
+  },
+  {
+    name: 'SDE Level 1 Study Area', building: 'SDE2',
+    faculty: ['Design & Engineering'], spot_type: 'study_room',
+    latitude: 1.2975, longitude: 103.7708, capacity: 25,
+    has_power: true, has_aircon: true,
+    description: 'Study area in the School of Design and Environment building. Large tables and 3D printing nearby.',
+    schedule: null,
+  },
+  {
+    name: 'SDE4 Study Area', building: 'SDE4',
+    faculty: ['Design & Engineering'], spot_type: 'study_room',
+    latitude: 1.2973, longitude: 103.7700, capacity: 35,
+    has_power: true, has_aircon: true,
+    description: 'Net-zero energy building with modern study spaces. Near Chinese Library and Central Library.',
+    schedule: null,
+  },
+
+  // Science: 4
+  {
+    name: 'S16 Study Area', building: 'S16',
+    faculty: ['Science'], spot_type: 'study_room',
+    latitude: 1.2966, longitude: 103.7807, capacity: 40,
+    has_power: true, has_aircon: true,
+    description: 'Study area in the Science block S16. Quiet outside of class hours.',
+    schedule: null,
+  },
+  {
+    name: 'S17 Study Area', building: 'S17',
+    faculty: ['Science'], spot_type: 'study_room',
+    latitude: 1.2982, longitude: 103.7804, capacity: 30,
+    has_power: true, has_aircon: true,
+    description: 'Study area in Science block S17 near bus stop. Near LT33 and LT34, convenient for studying between lectures.',
+    schedule: null,
+  },
+  {
+    name: 'Frontier Canteen Study Area', building: 'Science',
+    faculty: ['Science'], spot_type: 'outdoor',
+    latitude: 1.2967, longitude: 103.7805, capacity: 30,
+    has_power: false, has_aircon: false,
+    description: 'Open seating area near Frontier canteen and Medicine+Science Library. Convenient for meals.',
+    schedule: null,
+  },
+  {
+    name: 'CeLS Study Area', building: 'CeLS',
+    faculty: ['Science'], spot_type: 'study_room',
+    latitude: 1.2949, longitude: 103.7808, capacity: 20,
+    has_power: true, has_aircon: true,
+    description: 'Study area in Centre for Life Sciences building. Near Faculty of Science.',
+    schedule: null,
+  },
+
+  // Medicine: 1
+  {
+    name: 'MD11 Study Area', building: 'MD11',
+    faculty: ['Medicine'], spot_type: 'study_room',
+    latitude: 1.2954, longitude: 103.7822, capacity: 25,
+    has_power: true, has_aircon: true,
+    description: 'Study area in the medical block near Starbucks MD11. Close to NUH.',
+    schedule: null,
+  },
+
+  // Public Health: 1
+  {
+    name: 'Tahir Foundation Building Study Area', building: 'Tahir Foundation Building',
+    faculty: ['Public Health'], spot_type: 'study_room',
+    latitude: 1.2955, longitude: 103.7810, capacity: 20,
+    has_power: true, has_aircon: true,
+    description: 'Study area in the Saw Swee Hock School of Public Health building.',
+    schedule: null,
+  },
+
+  // Others: 2
+  {
+    name: 'i3 Building Study Area', building: 'i3',
+    faculty: ['University'], spot_type: 'study_room',
+    latitude: 1.2928, longitude: 103.7760, capacity: 25,
+    has_power: true, has_aircon: true,
+    description: 'Study area in the i3 building near NUS Enterprise. Sheltered walkway from Computing.',
+    schedule: null,
+  },
+  {
+    name: 'Ventus Study Area', building: 'Ventus',
+    faculty: ['University'], spot_type: 'study_room',
+    latitude: 1.2953, longitude: 103.7703, capacity: 30,
+    has_power: true, has_aircon: true,
+    description: 'Study area near Ventus bus stop and LT13. Campus infrastructure building with student spaces.',
+    schedule: null,
   },
 ];
 
@@ -165,9 +404,17 @@ const overrides = [
   { spotName: 'C J Koh Law Library',                        start_date: '2026-05-27', end_date: '2026-05-27', is_closed: true,  reason: 'Hari Raya Haji' },
   { spotName: 'Music Library',                              start_date: '2026-05-26', end_date: '2026-05-26', is_closed: true,  reason: 'Library Staff Event' },
   { spotName: 'Music Library',                              start_date: '2026-05-27', end_date: '2026-05-27', is_closed: true,  reason: 'Hari Raya Haji' }
+  { spotName: 'Central Library Level 1',                    start_date: '2026-05-26', end_date: '2026-05-26', is_closed: true, reason: 'Library Staff Event' },
+  { spotName: 'Central Library Level 1',                    start_date: '2026-05-27', end_date: '2026-05-27', is_closed: true, reason: 'Hari Raya Haji' },
+  { spotName: 'Central Library Level 4 Discussion Rooms',   start_date: '2026-05-26', end_date: '2026-05-26', is_closed: true, reason: 'Library Staff Event' },
+  { spotName: 'Central Library Level 4 Discussion Rooms',   start_date: '2026-05-27', end_date: '2026-05-27', is_closed: true, reason: 'Hari Raya Haji' },
+  { spotName: 'Central Library Level 5',                    start_date: '2026-05-26', end_date: '2026-05-26', is_closed: true, reason: 'Library Staff Event' },
+  { spotName: 'Central Library Level 5',                    start_date: '2026-05-27', end_date: '2026-05-27', is_closed: true, reason: 'Hari Raya Haji' },
+  { spotName: 'Wan Boo Sow Chinese Library',                start_date: '2026-05-26', end_date: '2026-05-26', is_closed: true, reason: 'Library Staff Event' },
+  { spotName: 'Wan Boo Sow Chinese Library',                start_date: '2026-05-27', end_date: '2026-05-27', is_closed: true, reason: 'Hari Raya Haji' },
 ];
 
-// Feedback: [spotName, noise_level(1-5), crowd_level(1-5), comment, hoursAgo]
+// Example feedback: [spotName, noise_level(1-5), crowd_level(1-5), comment, hoursAgo] (might consider removing)
 const exampleFeedback = [
   ['Central Library Level 3', 1, 2, 'Very quiet, barely anyone here.',            2],
   ['Central Library Level 3', 2, 3, 'A bit busier than usual but still okay.',    5],
@@ -223,9 +470,9 @@ const exampleFeedback = [
   ['Wan Boo Sow Chinese Library', 2, 2, 'Quiet with a few regulars.',       4],
   ['Wan Boo Sow Chinese Library', 1, 1, 'Saturday morning, almost empty.', 28],
 
-  ['UTown Study Room (Education Resource Centre)', 3, 4, 'Popular spot, most seats taken.', 2],
-  ['UTown Study Room (Education Resource Centre)', 2, 3, 'Late night, thinning out.',       8],
-  ['UTown Study Room (Education Resource Centre)', 4, 5, 'Exam period, completely full.',  26],
+  ['UTown The Study', 3, 4, 'Popular spot, most seats taken.', 2],
+  ['UTown The Study', 2, 3, 'Late night, thinning out.',       8],
+  ['UTown The Study', 4, 5, 'Exam period, completely full.',  26],
 
   ['UTown Plaza Level 2', 3, 3, 'Foot traffic noise but manageable.', 3],
   ['UTown Plaza Level 2', 4, 4, 'Lunch hour, very noisy.',           27],
@@ -240,11 +487,11 @@ const exampleFeedback = [
 
   ['E3 Level 6 Study Area', 2, 2, 'Quiet between classes.',       3],
   ['E3 Level 6 Study Area', 4, 4, 'Lab sessions nearby, noisy.', 27],
-];
+]
 
 async function seed() {
   try {
-    // Remove existing data
+    // Remove any existing data
     await pool.query('DELETE FROM refresh_tokens');
     await pool.query('DELETE FROM spot_schedule_overrides');
     await pool.query('DELETE FROM spot_schedules');
@@ -331,14 +578,14 @@ async function seed() {
       console.log(`  Spot: ${spot.name} (${hrs})`);
     }
 
-    // Add example feedback data
+    // Add example feedback data (Keeping both original sample + new time-based feedback)
     console.log('');
     let feedbackCount = 0;
 
     for (const [spotName, noise, crowd, comment, hoursAgo] of exampleFeedback) {
       const spotId = spotNameToId[spotName];
       if (!spotId) {
-        console.log(`  WARNING: No spot found for "${spotName}"`);
+        console.log(`  ERROR: No spot found for "${spotName}"`);
         continue;
       }
       await pool.query(
@@ -349,12 +596,27 @@ async function seed() {
       feedbackCount++;
     }
     console.log(`  Inserted ${feedbackCount} feedback entries.\n`);
+    // Generate time-based feedback
+    const generatedFeedback = generateFeedback();
+    let generatedCount = 0;
+
+    for (const [spotName, noise, crowd, comment, hoursAgo] of generatedFeedback) {
+      const spotId = spotNameToId[spotName];
+      if (!spotId) continue;
+      await pool.query(
+        `INSERT INTO feedback (user_id, spot_id, noise_level, crowd_level, comment, created_at)
+         VALUES ($1, $2, $3, $4, $5, NOW() - INTERVAL '${hoursAgo} hours')`,
+        [testUserId, spotId, noise, crowd, comment]
+      );
+      generatedCount++;
+    }
+    console.log(`  Generated ${generatedCount} time-based feedback.\n`);
 
     // Add schedule overrides
     for (const ov of overrides) {
       const spotId = spotNameToId[ov.spotName];
       if (!spotId) {
-        console.log(`  WARNING: No spot found for override "${ov.spotName}"`);
+        console.log(`  ERROR: No spot found for override "${ov.spotName}"`);
         continue;
       }
       await pool.query(
@@ -368,7 +630,7 @@ async function seed() {
     }
     console.log('');
 
-    console.log(`Seeded ${studySpots.length} spots, ${feedbackCount} feedback, ${overrides.length} overrides, 2 test users.`);
+    console.log(`Seeded ${studySpots.length} spots, ${feedbackCount + generatedCount} feedback, ${overrides.length} overrides, 2 test users.`);
     await pool.end();
   } catch (error) {
     console.error('Seeding failed:', error.message);
