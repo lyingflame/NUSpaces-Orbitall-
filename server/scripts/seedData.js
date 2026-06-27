@@ -403,7 +403,7 @@ const overrides = [
   { spotName: 'C J Koh Law Library',                        start_date: '2026-05-26', end_date: '2026-05-26', is_closed: true,  reason: 'Library Staff Event' },
   { spotName: 'C J Koh Law Library',                        start_date: '2026-05-27', end_date: '2026-05-27', is_closed: true,  reason: 'Hari Raya Haji' },
   { spotName: 'Music Library',                              start_date: '2026-05-26', end_date: '2026-05-26', is_closed: true,  reason: 'Library Staff Event' },
-  { spotName: 'Music Library',                              start_date: '2026-05-27', end_date: '2026-05-27', is_closed: true,  reason: 'Hari Raya Haji' }
+  { spotName: 'Music Library',                              start_date: '2026-05-27', end_date: '2026-05-27', is_closed: true,  reason: 'Hari Raya Haji' },
   { spotName: 'Central Library Level 1',                    start_date: '2026-05-26', end_date: '2026-05-26', is_closed: true, reason: 'Library Staff Event' },
   { spotName: 'Central Library Level 1',                    start_date: '2026-05-27', end_date: '2026-05-27', is_closed: true, reason: 'Hari Raya Haji' },
   { spotName: 'Central Library Level 4 Discussion Rooms',   start_date: '2026-05-26', end_date: '2026-05-26', is_closed: true, reason: 'Library Staff Event' },
