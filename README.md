@@ -17,6 +17,10 @@ campus using real-time data, thereby improving their overall studying experience
 Students will be able to more easily find suitable study spots near them rather than
 wander around different areas to check for seats, saving them precious study time.
 
+## Demo
+
+[Watch the Demo Video Here](https://drive.google.com/file/d/1guGV5fSVefILQaDfOtRou0UaTen2Q7wt/view?usp=sharing)
+
 ---
 
 ## Tech Stack
@@ -29,8 +33,8 @@ wander around different areas to check for seats, saving them precious study tim
 | Database | PostgreSQL | Relational data storage |
 | Authentication | JWT + bcrypt | Secure authentication with access/refresh tokens |
 | Validation | Zod | Schema-based input validation |
-| Scheduling | node-cron | Periodic score recalculation |
-| Real-time Update | socket.io | Web socket real-time communication (to be implemented) |
+| Scheduling | node-cron | Periodic score recalculation & expired token removal |
+| Real-time Update | socket.io | Web socket real-time communication |
 | Version Control | GitHub | Source control and collaboration |
 
 ---
@@ -124,6 +128,11 @@ The algorithm only considers feedback submitted within a configurable time windo
 Scores are recalculated in two ways:
 1. **Every 15 minutes** via a scheduled CRON job
 2. **Automatically updates** whenever a student submits new feedback for a spot
+3. **On demand** when a user presses the Refresh button
+
+### Real-Time Score Updates (socket.io)
+
+When any scores are changed, the backend server will broadcast the update as an emit event to all connected user browsers through socket.io Web Socket. The connected clients will receive the new scores in real-time without needing to refresh the page. For example, if a user sends a new feedback, the score will be automatically recalculated and updated instantly across all browsers.
 
 ## 3. Status Display
 
@@ -210,6 +219,56 @@ The search and filter feature enables users to narrow down study spots to what t
 - **Text search**: search for name of study spot, building, or faculty
 - **Quietness filter**: filter by category (Very Quiet, Quiet, Moderate, Noisy, Very Noisy)
 - **Type filter**: filter by space type (library, study room, outdoor, lounge, lab)
+- **Amenity filter**: filter by power outlets or air conditioning availability
+- **Open Now**: filter to show only spots that are currently open based on their schedule
+
+### Location-based Spot Searching
+
+The backend supports location-based sorting distance using the Haversine formula. When the frontend provides the user's GPS coordinates (latitude & longitude), study spots are sorted by distance (nearest first) and can further be optionally filtered by max radius in kilometers. This enables students to find the closest study spots to their current location on campus.
+
+## 6. Opening Hours System
+
+Study spots have regular weekly schedules (weekday, Saturday, Sunday) with support for date-specific overrides for holidays, exam periods, and special events.
+
+The system determines if a spot is open by checking:
+1. **Override** for today's date — if found, use it (e.g., "Closed — Hari Raya Haji")
+2. **Regular schedule** for today's day type — weekday, Saturday, or Sunday
+3. **No schedule** — assumed always accessible (outdoor spots, open areas)
+
+When multiple overrides overlap (e.g., a holiday falls during an exam period), the most specific override (shortest date range) takes priority.
+
+### NUS Libraries Schedule Updates
+
+**To Be Implemented.** Performs periodic updates for all NUS libraries schedules to ensure it is up-to-date through the NUS libraries website.
+
+## 7. Role-based Access Control (RBAC)
+
+Role-Based Access Control restricts administrative actions to users with the `admin` role. Regular users are able to view study spots and submit feedback. Admin users can additionally manage (create, edit or delete) study spots , schedules, and schedule overrides.
+
+The authorisation flow for admin API endpoints:
+```
+Request
+↓
+Authenticate (verify JWT, load user from database)
+↓
+Authorise 'admin' role
+↓
+Validate using Zod schema
+↓
+Send back to controller
+```
+
+### Admin Management Functions
+
+Admin users can manage the following:
+
+| Data | Functions |
+|:--- |:--- |
+| Study Spots | Admins can add new study spots, edit existing spots and delete spots. Deletion of spots will also delete associated schedules & overrides |
+| Schedules | Admins can add new schedules, edit the existing weekly schedules or remove it from any study spot |
+| Schedule Overrides | Admins can add and remove schedule overrides to ensure that the Open/Close status of all locations remain accurate |
+
+---
 
 # Architecture and Flow
 
@@ -289,9 +348,85 @@ Backend recalculates the study spot’s scores
 Frontend refreshes data and shows updated scores
 ```
 
-## Demo
+## JSON Token Refresh Flow
 
-[Watch the Demo Video](https://drive.google.com/file/d/1guGV5fSVefILQaDfOtRou0UaTen2Q7wt/view?usp=sharing)
+```
+User's short-term access token expires (after 15 mins)
+↓
+API call receives 401 with code TOKEN_EXPIRED
+↓
+Frontend automatically calls POST /api/auth/refresh
+↓
+Backend verifies refresh token, issues new access + refresh tokens
+↓
+Original API call is retried
+↓
+User experiences no interruption
+```
+
+---
+
+## API Endpoints
+
+### Authentication
+
+| Method | Endpoint | Auth | Description |
+|:--|:--|:--:|:--|
+| POST | `/api/auth/register` | No | Create a new account |
+| POST | `/api/auth/login` | No | Log in and obtain tokens |
+| POST | `/api/auth/refresh` | No | Refresh an expired access token |
+| POST | `/api/auth/logout` | No | Clear cookies and revoke refresh token |
+| GET | `/api/auth/me` | Yes | Get current user info |
+
+### Study Spots
+
+| Method | Endpoint | Auth | Description |
+|:--|:--|:--:|:--|
+| GET | `/api/spots` | No | List all spots with scores and status (supports filtering queries as seen below) |
+| GET | `/api/spots/filters` | No | Get all unique data categories for filter dropdowns in Explore page |
+| GET | `/api/spots/:id` | No | Get a single spot with details and recent feedback |
+| POST | `/api/spots/refresh` | No | Recalculate all scores and return refreshed data |
+
+### Feedback
+
+| Method | Endpoint | Auth | Description |
+|:--|:--|:--:|:--|
+| POST | `/api/feedback` | Yes | Submit noise and crowd feedback for a spot |
+| GET | `/api/feedback/mine` | Yes | Get all feedback submitted by the current user |
+
+### Admin (requires admin role)
+
+| Method | Endpoint | Auth | Description |
+|:--|:--|:--:|:--|
+| POST | `/api/admin/spots` | Admin | Add a new study spot |
+| PUT | `/api/admin/spots/:id` | Admin | Update spot details (only change updated variables) |
+| DELETE | `/api/admin/spots/:id` | Admin | Remove a study spot (including associated schedules, overrides & feedbacks) |
+| GET | `/api/admin/schedules` | Admin | List schedules (optional `?spotId=` filter) |
+| PUT | `/api/admin/schedules` | Admin | Add or update a schedule |
+| DELETE | `/api/admin/schedules/:id` | Admin | Remove a schedule for stated study spot ID |
+| GET | `/api/admin/overrides` | Admin | List overrides (optional `?spotId=` filter) |
+| POST | `/api/admin/overrides` | Admin | Add a schedule override |
+| PUT | `/api/admin/overrides/:id` | Admin | Edit an override (only change updated variables) |
+| DELETE | `/api/admin/overrides/:id` | Admin | Remove an override |
+
+### Filtering Parameters for GET /api/spots
+
+| Query Parameter | Example | Description |
+|:--|:--|:--|
+| `search` | `?search=yih` | Text search for name, building, or faculty |
+| `building` | `?building=COM1` | Filter by building |
+| `faculty` | `?faculty=Computing` | Filter by faculty |
+| `spotType` | `?spotType=library` | Filter by type |
+| `noise` | `?noise=quiet` | Filter by noise category |
+| `hasPower` | `?hasPower=true` | Filter by power outlets |
+| `hasAircon` | `?hasAircon=true` | Filter by air conditioning |
+| `openNow` | `?openNow=true` | Show only currently open spots |
+| `lat` | `?lat=1.1111` | User latitude (enables distance sort) |
+| `lng` | `?lng=100.3333` | User longitude (enables distance sort) |
+| `radius` | `?radius=1.5` | Max distance in km for displayed locations |
+| `sortBy` | `?sortBy=crowd` | Sort by: quietness, crowd, name (default is quietness) |
+
+---
 
 ## Getting Started 
 
@@ -312,7 +447,7 @@ cd NUSpaces-Orbitall-
 npm run install-all
 
 # Add .env files (change server/.env DB user or password if needed)
-cp client/.env.exampme client/.env
+cp client/.env.example client/.env
 cp server/.env.example server/.env
 ```
 
@@ -339,6 +474,15 @@ npm run dev
 ```
 
 The backend runs on `http://localhost:5000` and the frontend on `http://localhost:5173`.
+
+### Test Accounts
+
+| Role | Email | Password |
+|:--|:--|:--|
+| User | `e1234567@u.nus.edu` | `password123` |
+| Admin | `admin@u.nus.edu` | `admin123` |
+
+---
 
 # Project Information
 

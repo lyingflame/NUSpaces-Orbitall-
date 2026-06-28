@@ -18,7 +18,7 @@ const StudySpot = require('../models/StudySpot');
 
 const LAMBDA = 0.05;           // time-decay
 const MIN_WEIGHT = 0.1;        // for historical data
-const TIME_WINDOW_HOURS = 12;   // +- 1 hour time window (currently disabled)
+const TIME_WINDOW_HOURS = 1;   // +- 1 hour time window
 const RECENT_HOURS = 6;        
 
 const scoringService = {

@@ -38,7 +38,7 @@ const User = {
   // Get user by ID
   async findById(id) {
     const result = await query(
-      'SELECT id, email, username, created_at FROM users WHERE id = $1',
+      'SELECT id, email, username, role, created_at FROM users WHERE id = $1',
       [id]
     );
     return result.rows[0] || null;

@@ -1,4 +1,5 @@
 // Backend server API 
+
 const path = require('path');
 const express = require('express');
 const http = require('http');
@@ -45,6 +46,7 @@ app.use('/api', apiLimiter); // rate limiting
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/spots', require('./routes/spotRoutes'));
 app.use('/api/feedback', require('./routes/feedbackRoutes'));
+app.use('/api/admin', require('./routes/adminRoutes'));
 
 // Health check (debugging)
 app.get('/api/health', (req, res) => {

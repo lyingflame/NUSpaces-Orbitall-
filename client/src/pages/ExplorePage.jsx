@@ -48,11 +48,8 @@ const SORT_OPTIONS = [
 ];
 
 const SOCKET_EVENTS_TO_REFRESH = [
-  "update",
-  "refresh",
-  "spots:update",
-  "spots:refresh",
-  "feedback:created",
+  "score-updated",
+  "scores-refreshed",
 ];
 
 const DEFAULT_FILTERS = {

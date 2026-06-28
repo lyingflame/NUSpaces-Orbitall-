@@ -44,7 +44,7 @@ const authController = {
       res.cookie('refreshToken', refreshToken, cookieOptions(true));
 
       res.status(201).json({
-        user: { id: user.id, email: user.email, username: user.username },
+        user: { id: user.id, email: user.email, username: user.username, role: user.role },
       });
     } catch (error) {
       next(error);
@@ -79,7 +79,7 @@ const authController = {
       res.cookie('refreshToken', refreshToken, cookieOptions(true));
 
       res.status(200).json({
-        user: { id: user.id, email: user.email, username: user.username },
+        user: { id: user.id, email: user.email, username: user.username, role: user.role },
       });
     } catch (error) {
       next(error);
