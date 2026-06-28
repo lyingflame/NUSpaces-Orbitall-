@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { ArrowLeft, LogIn, UserPlus } from "lucide-react";
 import { apiRequest } from "../services/api";
 
 export default function LoginPage({ onLogin, onBack }) {
@@ -41,12 +40,14 @@ export default function LoginPage({ onLogin, onBack }) {
         body: JSON.stringify(body),
       });
 
-      const loggedInUser = data.user || data.data?.user || data;
+      if (!data?.user) {
+        throw new Error("Login successful, but no user data was returned.");
+      }
 
-      localStorage.setItem("nuspacesUser", JSON.stringify(loggedInUser));
-      onLogin(loggedInUser);
+      localStorage.setItem("nuspacesUser", JSON.stringify(data.user));
+      onLogin(data.user);
     } catch (err) {
-      setError(err.message || "Unable to continue.");
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -62,25 +63,17 @@ export default function LoginPage({ onLogin, onBack }) {
       <div className="simpleLoginCard">
         {onBack && (
           <button className="backButton" onClick={onBack}>
-            <ArrowLeft size={15} />
-            Back to Explore
+            ← Back to Explore
           </button>
         )}
 
-        <div className="loginLogo">
-          <div className="np-logo-mark">
-            <span>NS</span>
-          </div>
-          <div>
-            <h1>NUSpaces</h1>
-            <p>Campus study spaces, updated live</p>
-          </div>
-        </div>
+        <h1>NUSpaces</h1>
 
-        <div className="loginModeBadge">
-          {mode === "login" ? <LogIn size={14} /> : <UserPlus size={14} />}
-          {mode === "login" ? "Welcome back" : "Create account"}
-        </div>
+        <p className="loginSubtext">
+          {mode === "login"
+            ? "Login to your account"
+            : "Create a new NUSpaces account"}
+        </p>
 
         <form onSubmit={handleSubmit} className="simpleLoginForm">
           {mode === "register" && (
@@ -96,7 +89,7 @@ export default function LoginPage({ onLogin, onBack }) {
           )}
 
           <div className="formGroup">
-            <label>NUS Email</label>
+            <label>Email</label>
             <input
               type="email"
               placeholder="e.g. e1234567@u.nus.edu"
