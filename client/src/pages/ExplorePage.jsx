@@ -69,27 +69,7 @@ const DEFAULT_FILTERS = {
   radius: "",
 };
 
-const DETAIL_EXCLUDE_KEYS = new Set([
-  "id",
-  "name",
-  "building",
-  "faculty",
-  "spot_type",
-  "type",
-  "is_open",
-  "status",
-  "noise_status",
-  "quietness_score",
-  "avg_crowd",
-  "crowdLevel",
-  "noiseLevel",
-  "has_power",
-  "has_aircon",
-  "distance",
-  "distance_km",
-  "distanceKm",
-  "distance_in_km",
-]);
+
 
 function toArray(data) {
   if (Array.isArray(data)) return data;
@@ -217,13 +197,6 @@ function getDistance(space) {
   if (Number.isNaN(value)) return null;
 
   return value;
-}
-
-function formatDetailLabel(key) {
-  return key
-    .replaceAll("_", " ")
-    .replace(/([A-Z])/g, " $1")
-    .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 function formatDetailValue(value) {
@@ -1079,20 +1052,6 @@ export default function ExplorePage({ user, onLoginClick, onLogout }) {
                 </div>
               )}
 
-              {getExtraDetails(selectedSpace).length > 0 && (
-                <div className="np-details-section">
-                  <h3>Additional Information</h3>
-
-                  <div className="np-extra-detail-list">
-                    {getExtraDetails(selectedSpace).map(([key, value]) => (
-                      <div className="np-extra-detail-row" key={key}>
-                        <span>{formatDetailLabel(key)}</span>
-                        <strong>{formatDetailValue(value)}</strong>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         )}
