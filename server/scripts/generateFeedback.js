@@ -127,7 +127,7 @@ const comments = {
   12: ['Lunch hour, busiest time.', 'Packed during lunch.', 'Noisy lunch crowd.', 'Finding seats is hard.', ''],
   14: ['Post-lunch, area getting less crowded.', 'Still busy but manageable.', 'Afternoon session.'],
   16: ['Afternoon crowd.', 'Some people leaving.', 'Moderately noisy.'],
-  18: ['Evening, thinning out.', 'Dinner time, fewer people.', 'Nice evening study vibe.'],
+  18: ['Evening, crowd is thinning out.', 'Dinner time, fewer people.', 'Nice evening study vibe.'],
   20: ['Evening session, pretty calm.', 'Good studying time.', 'Quiet evening.'],
   22: ['Late evening, very few left.', 'Peaceful night.', 'Getting quiet now.', ''],
 };

@@ -199,7 +199,20 @@ This prevents the frontend from wrongly showing the crowd level as `/100` when t
 
 ## 4. Feedback System
 
-Feedback can be provided for each study spot with a noise and crowd level (from 1 – 5) and an optional comment. This feedback data is used to calculate the scores for each location. After each feedback submission, the score is automatically recalculated, ensuring the most up-to-date scoring possible.  
+Feedback can be provided for each study spot with a noise and crowd level (from 1 – 5) and an optional comment. This feedback data is used to calculate the scores for each location. After each feedback submission, the score is automatically recalculated, ensuring the most up-to-date scoring possible. 
+
+Authenticated users can report:
+
+- Noise Level (1–5)
+- Crowd Level (1–5)
+- Optional comments
+
+After submission:
+
+1. Feedback is validated.
+2. Feedback is stored in PostgreSQL.
+3. Quietness and crowd scores are recalculated.
+4. The Explore page automatically refreshes to display updated information.
 
 Restrictions:
 - Users must be logged in to submit feedback
@@ -222,9 +235,49 @@ The search and filter feature enables users to narrow down study spots to what t
 - **Amenity filter**: filter by power outlets or air conditioning availability
 - **Open Now**: filter to show only spots that are currently open based on their schedule
 
-### Location-based Spot Searching
+### Text Search
 
-The backend supports location-based sorting distance using the Haversine formula. When the frontend provides the user's GPS coordinates (latitude & longitude), study spots are sorted by distance (nearest first) and can further be optionally filtered by max radius in kilometers. This enables students to find the closest study spots to their current location on campus.
+Searches across:
+
+- Study space name
+- Building name
+- Faculty
+- Venue type
+
+### Filters
+
+The Explore page supports filtering by:
+
+1. **Noise Level**
+- Very Quiet
+- Quiet
+- Moderate
+- Noisy
+- Very Noisy
+
+2. **Crowd Index**
+- Low
+- Medium
+- High
+- No Reports
+
+3. **Venue Type**
+
+4. **Faculty**
+
+5. **Opening Status**
+- Open
+- Closed
+- Unknown
+
+6. **Amenities**
+- Power sockets
+- Air-conditioning
+- Power + Air-conditioning
+
+### Location-based Searching
+
+The backend supports location-based filtering of study spots, sorting distance using the Haversine formula. When the frontend provides the user's GPS coordinates (latitude & longitude), study spots are sorted by distance (nearest first) and can further be optionally filtered by max radius in kilometers. This enables students to find the closest study spots to their current location on campus.
 
 ## 6. Opening Hours System
 
@@ -258,15 +311,29 @@ Validate using Zod schema
 Send back to controller
 ```
 
-### Admin Management Functions
+### Student Functions
 
-Admin users can manage the following:
+Students (regular users) can:
+
+- Browse study spaces
+- Search and filter locations
+- View detailed venue information
+- Submit study space feedback
+
+
+### Administrator Functions
+
+Administrative users can manage the following:
 
 | Data | Functions |
 |:--- |:--- |
 | Study Spots | Admins can add new study spots, edit existing spots and delete spots. Deletion of spots will also delete associated schedules & overrides |
 | Schedules | Admins can add new schedules, edit the existing weekly schedules or remove it from any study spot |
 | Schedule Overrides | Admins can add and remove schedule overrides to ensure that the Open/Close status of all locations remain accurate |
+| Refresh Data | Admins can refresh study space data by triggering backend recalculation using the `Refresh data` button |
+
+### Admin Page/Buttons (TBA)
+The frontend addition of these admin endpoints are not implemented yet and has not been pushed to main. The admin user will have additional buttons to add, edit or remove spots, schedules and overrides.
 
 ---
 
@@ -277,6 +344,10 @@ Admin users can manage the following:
 ![NUSpaces MVC Architecture](images/MVC.png)
 
 ## Database (PostgreSQL)
+
+### Entity Relationship Diagram (ERD)
+
+![NUSpaces ER Diagram](images/ERD.png)
 
 ### Tables
 
@@ -294,11 +365,11 @@ Admin users can manage the following:
 
 ```
 ExplorePage loads  
-↓  
+        ↓  
 Calls GET /api/spots  
-↓  
+        ↓  
 Backend returns study space data  
-↓  
+        ↓  
 Frontend displays cards  
 ```
 
@@ -306,15 +377,15 @@ Frontend displays cards
 
 ```
 User enters email and password
-↓
+        ↓
 Frontend calls POST /api/auth/register
-↓
+        ↓
 Backend validates user
-↓
+        ↓
 Backend generates authentication cookies & tokens
-↓
+        ↓
 Frontend stores user information
-↓
+        ↓
 User returns to Explore page
 ```
 
@@ -322,15 +393,15 @@ User returns to Explore page
 
 ```
 User enters email and password  
-↓  
+        ↓  
 Frontend calls POST /api/auth/login  
-↓  
+        ↓  
 Backend validates user credentials
-↓  
+        ↓  
 Backend generates authentication cookies & tokens
-↓  
+        ↓  
 Frontend stores user information  
-↓  
+        ↓  
 User returns to Explore page  
 ```
 
@@ -338,29 +409,45 @@ User returns to Explore page
 
 ```
 User enters noise level (1–5), crowd level (1–5), and optional comment
-↓  
+        ↓  
 Frontend calls POST /api/feedback
-↓  
+        ↓  
 Backend validates input and saves feedback
-↓  
+        ↓  
 Backend recalculates the study spot’s scores
-↓  
+        ↓  
 Frontend refreshes data and shows updated scores
+```
+
+## Administrator Flow
+
+```
+Administrator logs in
+        ↓
+Explore Page
+        ↓
+Refresh Data
+        ↓
+POST /api/spots/refresh
+        ↓
+Backend recalculates scores
+        ↓
+Frontend reloads study spaces
 ```
 
 ## JSON Token Refresh Flow
 
 ```
 User's short-term access token expires (after 15 mins)
-↓
+        ↓
 API call receives 401 with code TOKEN_EXPIRED
-↓
+        ↓
 Frontend automatically calls POST /api/auth/refresh
-↓
+        ↓
 Backend verifies refresh token, issues new access + refresh tokens
-↓
+        ↓
 Original API call is retried
-↓
+        ↓
 User experiences no interruption
 ```
 
