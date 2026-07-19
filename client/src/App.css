@@ -882,6 +882,272 @@ button:disabled {
   font-weight: 900;
 }
 
+
+
+/* ========================================
+   ADMIN EDITING UI
+   Distinct indigo/purple theme for admin-only actions
+======================================== */
+
+.np-card-admin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid #7c3aed;
+  border-radius: 999px;
+  padding: 7.5px 10px;
+  background: #f5f3ff;
+  color: #6d28d9;
+  font-size: 10.8px;
+  font-weight: 900;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease,
+    color 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.np-card-admin:hover {
+  transform: translateY(-1px);
+  background: #7c3aed;
+  color: #ffffff;
+  border-color: #7c3aed;
+  box-shadow: 0 8px 18px rgba(124, 58, 237, 0.2);
+}
+
+.np-card-admin:active {
+  transform: translateY(0);
+}
+
+.np-card-admin:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 4px rgba(124, 58, 237, 0.14),
+    0 8px 18px rgba(124, 58, 237, 0.16);
+}
+
+.np-details-admin-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: 16px 0 2px;
+}
+
+/* Admin form card */
+.np-edit-form {
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid #ddd6fe;
+  border-radius: 20px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(250, 248, 255, 0.98),
+      rgba(245, 243, 255, 0.92)
+    );
+  box-shadow: 0 12px 30px rgba(109, 40, 217, 0.08);
+}
+
+.np-edit-form .np-detail-grid {
+  margin-top: 0;
+}
+
+/* Editable field cards */
+.np-edit-form .np-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 12px;
+  border: 1px solid #e9d5ff;
+  border-radius: 15px;
+  background: #ffffff;
+}
+
+.np-edit-form .np-detail-item span {
+  margin-bottom: 0;
+  color: #6d28d9;
+  font-size: 10.5px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Inputs inside admin form */
+.np-edit-form input,
+.np-edit-form select,
+.np-edit-form textarea {
+  width: 100%;
+  border: 1px solid #ddd6fe;
+  border-radius: 11px;
+  padding: 9px 10px;
+  outline: none;
+  background: #fcfbff;
+  color: #28134d;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 650;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
+}
+
+.np-edit-form input:hover,
+.np-edit-form select:hover,
+.np-edit-form textarea:hover {
+  border-color: #c4b5fd;
+}
+
+.np-edit-form input:focus,
+.np-edit-form select:focus,
+.np-edit-form textarea:focus {
+  border-color: #7c3aed;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
+}
+
+/* Power / Aircon options */
+.np-edit-checkbox-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin: 14px 0;
+}
+
+.np-edit-checkbox-row label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 11px;
+  border: 1px solid #ddd6fe;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #5b21b6;
+  font-size: 11.5px;
+  font-weight: 850;
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.np-edit-checkbox-row label:hover {
+  transform: translateY(-1px);
+  background: #faf5ff;
+  border-color: #a78bfa;
+}
+
+.np-edit-checkbox-row input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  padding: 0;
+  accent-color: #7c3aed;
+  cursor: pointer;
+}
+
+/* Description field */
+.np-edit-description {
+  display: grid;
+  gap: 7px;
+}
+
+.np-edit-description > span {
+  color: #6d28d9;
+  font-size: 10.5px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.np-edit-description textarea {
+  resize: vertical;
+  min-height: 96px;
+}
+
+/* Save / cancel controls in edit mode */
+.np-edit-form .np-card-actions {
+  grid-template-columns: 1fr 1fr;
+  margin-top: 14px;
+}
+
+.np-edit-form .np-card-primary {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(124, 58, 237, 0.18);
+}
+
+.np-edit-form .np-card-primary:hover {
+  background: linear-gradient(135deg, #6d28d9, #5b21b6);
+  box-shadow: 0 10px 22px rgba(124, 58, 237, 0.24);
+}
+
+.np-edit-form .np-card-secondary {
+  background: #ffffff;
+  color: #5b21b6;
+  border: 1px solid #ddd6fe;
+}
+
+.np-edit-form .np-card-secondary:hover {
+  background: #faf5ff;
+  border-color: #c4b5fd;
+}
+
+/* Admin error inside edit form */
+.np-edit-form .simpleError {
+  margin-top: 12px;
+  border: 1px solid #fecaca;
+}
+
+/* Make three study-card actions fit cleanly when admin is logged in */
+.np-study-card .np-card-actions:has(.np-card-admin) {
+  grid-template-columns: 1fr 1fr;
+}
+
+.np-study-card .np-card-actions:has(.np-card-admin) .np-card-admin {
+  grid-column: 1 / -1;
+}
+
+/* Admin role label styling */
+.np-user-pill {
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease;
+}
+
+.np-user-pill:has(+ .np-outline-btn) {
+  box-shadow: none;
+}
+
+@media (max-width: 680px) {
+  .np-details-admin-actions {
+    justify-content: stretch;
+  }
+
+  .np-details-admin-actions .np-card-admin {
+    width: 100%;
+  }
+
+  .np-edit-form {
+    padding: 14px;
+  }
+
+  .np-edit-checkbox-row {
+    flex-direction: column;
+  }
+
+  .np-edit-checkbox-row label {
+    width: 100%;
+    border-radius: 12px;
+  }
+
+  .np-edit-form .np-card-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+
 /* RESPONSIVE */
 
 @media (max-width: 1250px) {
@@ -964,5 +1230,273 @@ button:disabled {
 
   .np-details-header h2 {
     font-size: 23px;
+  }
+}
+
+/* ========================================
+   TOAST NOTIFICATIONS
+======================================== */
+
+.np-toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(380px, calc(100vw - 32px));
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  box-shadow: 0 18px 45px rgba(18, 61, 42, 0.18);
+  animation: np-toast-in 0.25s ease-out;
+}
+
+.np-toast.success {
+  border-left: 4px solid #16a34a;
+}
+
+.np-toast.error {
+  border-left: 4px solid #dc2626;
+}
+
+.np-toast-icon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 16px;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+
+.np-toast.success .np-toast-icon {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.np-toast.error .np-toast-icon {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.np-toast-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.np-toast-content strong {
+  color: var(--green-dark);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.np-toast-content span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.np-toast-close {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.np-toast-close:hover {
+  background: var(--surface-soft);
+  color: var(--green-dark);
+}
+
+@keyframes np-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 680px) {
+  .np-toast {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    width: auto;
+  }
+}
+
+
+/* ========================================
+   CUSTOM USER FEEDBACK MODAL
+======================================== */
+
+.np-feedback-modal {
+  width: min(560px, 96vw);
+  max-height: 88vh;
+  overflow-y: auto;
+  border-radius: 24px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  box-shadow: 0 24px 70px rgba(9, 27, 18, 0.28);
+  padding: 22px;
+}
+
+.np-feedback-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.np-feedback-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: var(--lime-soft);
+  color: var(--green-dark);
+  font-size: 10.5px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.np-feedback-header h2 {
+  margin: 10px 0 5px;
+  color: var(--green-dark);
+  font-size: 24px;
+  letter-spacing: -0.045em;
+  line-height: 1.1;
+}
+
+.np-feedback-header p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.np-feedback-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.np-feedback-field {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fbfcf7;
+}
+
+.np-feedback-field label {
+  color: var(--green-dark);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.np-feedback-field p {
+  margin: 0 0 3px;
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
+.np-feedback-field select,
+.np-feedback-field textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 11px;
+  outline: none;
+  background: #ffffff;
+  color: var(--text);
+  font: inherit;
+  font-size: 12.5px;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.np-feedback-field select:focus,
+.np-feedback-field textarea:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 4px rgba(18, 61, 42, 0.1);
+}
+
+.np-feedback-field textarea {
+  resize: vertical;
+  min-height: 96px;
+}
+
+.np-feedback-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.np-feedback-cancel,
+.np-feedback-submit {
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 900;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
+}
+
+.np-feedback-cancel {
+  background: #ffffff;
+  color: var(--green);
+  border: 1px solid var(--border);
+}
+
+.np-feedback-submit {
+  background: var(--green);
+  color: #ffffff;
+  border: 1px solid var(--green);
+  box-shadow: 0 8px 18px rgba(18, 61, 42, 0.16);
+}
+
+.np-feedback-cancel:hover,
+.np-feedback-submit:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.np-feedback-submit:hover {
+  background: var(--green-dark);
+}
+
+@media (max-width: 680px) {
+  .np-feedback-modal {
+    padding: 18px;
+  }
+
+  .np-feedback-actions {
+    grid-template-columns: 1fr;
   }
 }

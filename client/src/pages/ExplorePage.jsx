@@ -3,6 +3,7 @@ import {
   AirVent,
   CheckCircle,
   Clock,
+  LocateFixed,
   LogIn,
   LogOut,
   MapPin,
@@ -114,11 +115,49 @@ function getReportText(space) {
   return `${space.report_count} reports`;
 }
 
+function getDistanceText(space) {
+  const distance =
+    space.distance_km ??
+    space.distanceKm ??
+    space.distance ??
+    space.distance_m ??
+    null;
+
+  if (distance === null || distance === undefined) return null;
+
+  const value = Number(distance);
+
+  if (Number.isNaN(value)) return String(distance);
+
+  if (value > 50) {
+    return `${Math.round(value)} m away`;
+  }
+
+  return `${value.toFixed(2)} km away`;
+}
+
 export default function ExplorePage({ user, onLoginClick, onLogout }) {
   const isAdmin = user?.role === "admin";
 
   const [spaces, setSpaces] = useState([]);
   const [selectedSpace, setSelectedSpace] = useState(null);
+
+  // Admin-only edit state
+  const [isEditing, setIsEditing] = useState(false);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState("");
+  const [editForm, setEditForm] = useState({
+    name: "",
+    building: "",
+    faculty: "",
+    spotType: "library",
+    latitude: "",
+    longitude: "",
+    capacity: "",
+    hasPower: false,
+    hasAircon: false,
+    description: "",
+  });
 
   const [search, setSearch] = useState("");
   const [noiseFilter, setNoiseFilter] = useState("All");
@@ -126,19 +165,60 @@ export default function ExplorePage({ user, onLoginClick, onLogout }) {
   const [typeFilter, setTypeFilter] = useState("All");
   const [facultyFilter, setFacultyFilter] = useState("All");
   const [openFilter, setOpenFilter] = useState("All");
+  const [radiusFilter, setRadiusFilter] = useState("All");
   const [powerOnly, setPowerOnly] = useState(false);
   const [airconOnly, setAirconOnly] = useState(false);
+
+  const [userLocation, setUserLocation] = useState(null);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationError, setLocationError] = useState("");
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
 
-  async function loadSpaces() {
+  // Custom toast notifications for success/error feedback
+  const [toast, setToast] = useState(null);
+
+  // Custom feedback modal state
+  const [feedbackSpace, setFeedbackSpace] = useState(null);
+  const [feedbackForm, setFeedbackForm] = useState({
+    noiseLevel: "3",
+    crowdLevel: "3",
+    comment: "",
+  });
+  const [feedbackSaving, setFeedbackSaving] = useState(false);
+  const [feedbackError, setFeedbackError] = useState("");
+
+  function showToast(message, type = "success") {
+    setToast({ message, type });
+
+    window.setTimeout(() => {
+      setToast(null);
+    }, 3000);
+  }
+
+  async function loadSpaces(location = userLocation, radius = radiusFilter) {
     try {
       setLoading(true);
       setError("");
 
-      const data = await apiRequest("/api/spots");
+      let endpoint = "/api/spots";
+
+      if (location) {
+        const params = new URLSearchParams({
+          lat: String(location.lat),
+          lng: String(location.lng),
+        });
+
+        if (radius !== "All") {
+          params.set("radius", radius);
+        }
+
+        endpoint = `/api/spots?${params.toString()}`;
+      }
+
+      const data = await apiRequest(endpoint);
       setSpaces(toArray(data));
     } catch (err) {
       setError(err.message || "Unable to load study spaces.");
@@ -169,33 +249,212 @@ export default function ExplorePage({ user, onLoginClick, onLogout }) {
     }
   }
 
-  async function handleQuickFeedback(space) {
+  function handleUseMyLocation() {
+    setLocationError("");
+
+    if (!navigator.geolocation) {
+      setLocationError("Location is not supported by this browser.");
+      return;
+    }
+
+    setLocationLoading(true);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const location = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        };
+
+        setUserLocation(location);
+        setLocationLoading(false);
+
+        await loadSpaces(location, radiusFilter);
+      },
+      () => {
+        setLocationLoading(false);
+        setLocationError("Unable to access your location.");
+      }
+    );
+  }
+
+  async function handleClearLocation() {
+    setUserLocation(null);
+    setLocationError("");
+    setRadiusFilter("All");
+    await loadSpaces(null, "All");
+  }
+
+  async function handleRadiusChange(value) {
+    setRadiusFilter(value);
+
+    if (userLocation) {
+      await loadSpaces(userLocation, value);
+    }
+  }
+
+  function handleQuickFeedback(space) {
     if (!user) {
       onLoginClick();
       return;
     }
 
-    const noiseLevel = prompt("Noise level from 1 quiet to 5 noisy:");
-    const crowdLevel = prompt("Crowd level from 1 empty to 5 crowded:");
-    const comment = prompt("Optional comment:");
+    setFeedbackSpace(space);
+    setFeedbackError("");
+    setFeedbackForm({
+      noiseLevel: "3",
+      crowdLevel: "3",
+      comment: "",
+    });
+  }
 
-    if (!noiseLevel || !crowdLevel) return;
+  function closeFeedbackModal() {
+    setFeedbackSpace(null);
+    setFeedbackError("");
+    setFeedbackSaving(false);
+  }
+
+  async function handleSubmitFeedback(e) {
+    e.preventDefault();
+
+    if (!feedbackSpace) return;
 
     try {
+      setFeedbackSaving(true);
+      setFeedbackError("");
+
       await apiRequest("/api/feedback", {
         method: "POST",
         body: JSON.stringify({
-          spotId: space.id,
-          noiseLevel: Number(noiseLevel),
-          crowdLevel: Number(crowdLevel),
-          comment: comment || "",
+          spotId: feedbackSpace.id,
+          noiseLevel: Number(feedbackForm.noiseLevel),
+          crowdLevel: Number(feedbackForm.crowdLevel),
+          comment: feedbackForm.comment.trim(),
         }),
       });
 
-      alert("Feedback submitted successfully.");
+      closeFeedbackModal();
+      showToast("Status report submitted successfully.");
       await loadSpaces();
     } catch (err) {
-      alert(err.message);
+      setFeedbackError(
+        err.message || "Unable to submit your status report."
+      );
+      setFeedbackSaving(false);
+    }
+  }
+
+  function handleEditSpace(space) {
+    if (!isAdmin) {
+      setError("Only admins can edit study spaces.");
+      return;
+    }
+
+    setEditError("");
+    setSelectedSpace(space);
+    setIsEditing(true);
+
+    setEditForm({
+      name: space.name || "",
+      building: space.building || "",
+      faculty: Array.isArray(space.faculty)
+        ? space.faculty.join(", ")
+        : space.faculty || "",
+      spotType: space.spot_type || space.spotType || space.type || "library",
+      latitude:
+        space.latitude !== undefined && space.latitude !== null
+          ? String(space.latitude)
+          : "",
+      longitude:
+        space.longitude !== undefined && space.longitude !== null
+          ? String(space.longitude)
+          : "",
+      capacity:
+        space.capacity !== undefined && space.capacity !== null
+          ? String(space.capacity)
+          : "",
+      hasPower: space.has_power ?? space.hasPower ?? false,
+      hasAircon: space.has_aircon ?? space.hasAircon ?? false,
+      description: space.description || "",
+    });
+  }
+
+  function handleCloseSpaceModal() {
+    setSelectedSpace(null);
+    setIsEditing(false);
+    setEditError("");
+  }
+
+  function handleEditInputChange(e) {
+    const { name, value, type, checked } = e.target;
+
+    setEditForm((current) => ({
+      ...current,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  }
+
+  async function handleSaveSpace(e) {
+    e.preventDefault();
+
+    if (!isAdmin) {
+      setEditError("Only admins can edit study spaces.");
+      return;
+    }
+
+    if (!selectedSpace?.id) {
+      setEditError("Unable to identify this study space.");
+      return;
+    }
+
+    if (!editForm.name.trim()) {
+      setEditError("Study space name is required.");
+      return;
+    }
+
+    try {
+      setEditSaving(true);
+      setEditError("");
+
+      const payload = {
+        name: editForm.name.trim(),
+        building: editForm.building.trim(),
+        faculty: editForm.faculty
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean),
+        spotType: editForm.spotType,
+        hasPower: editForm.hasPower,
+        hasAircon: editForm.hasAircon,
+        description: editForm.description.trim(),
+      };
+
+      if (editForm.latitude !== "") {
+        payload.latitude = Number(editForm.latitude);
+      }
+
+      if (editForm.longitude !== "") {
+        payload.longitude = Number(editForm.longitude);
+      }
+
+      if (editForm.capacity !== "") {
+        payload.capacity = Number(editForm.capacity);
+      }
+
+      await apiRequest(`/api/admin/spots/${selectedSpace.id}`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+
+      await loadSpaces();
+
+      setSelectedSpace(null);
+      setIsEditing(false);
+      showToast("Study space updated successfully.");
+    } catch (err) {
+      setEditError(err.message || "Unable to update study space.");
+    } finally {
+      setEditSaving(false);
     }
   }
 
@@ -206,12 +465,16 @@ export default function ExplorePage({ user, onLoginClick, onLogout }) {
     setTypeFilter("All");
     setFacultyFilter("All");
     setOpenFilter("All");
+    setRadiusFilter("All");
     setPowerOnly(false);
     setAirconOnly(false);
+    setUserLocation(null);
+    setLocationError("");
+    loadSpaces(null, "All");
   }
 
   useEffect(() => {
-    loadSpaces();
+    loadSpaces(null, "All");
   }, []);
 
   const availableTypes = useMemo(() => {
@@ -337,7 +600,7 @@ export default function ExplorePage({ user, onLoginClick, onLogout }) {
             <h2>Explore Study Spaces</h2>
             <p>
               Search and filter NUS study spaces by venue, noise level, crowd
-              index, faculty, opening status, power sockets, and aircon.
+              index, faculty, opening status, location, and amenities.
             </p>
           </div>
 
@@ -444,6 +707,22 @@ export default function ExplorePage({ user, onLoginClick, onLogout }) {
             </label>
 
             <label>
+              Distance Radius
+              <select
+                value={radiusFilter}
+                onChange={(e) => handleRadiusChange(e.target.value)}
+                disabled={!userLocation}
+              >
+                <option>All</option>
+                <option value="0.5">Within 0.5 km</option>
+                <option value="1">Within 1 km</option>
+                <option value="1.5">Within 1.5 km</option>
+                <option value="2">Within 2 km</option>
+                <option value="3">Within 3 km</option>
+              </select>
+            </label>
+
+            <label>
               Amenities
               <select
                 value={
@@ -472,19 +751,16 @@ export default function ExplorePage({ user, onLoginClick, onLogout }) {
 
           <div className="np-filter-bottom-row">
             <button
-              className={powerOnly ? "np-toggle active" : "np-toggle"}
-              onClick={() => setPowerOnly((prev) => !prev)}
+              className={userLocation ? "np-toggle active" : "np-toggle"}
+              onClick={userLocation ? handleClearLocation : handleUseMyLocation}
+              disabled={locationLoading}
             >
-              <Zap size={13} />
-              Power sockets
-            </button>
-
-            <button
-              className={airconOnly ? "np-toggle active" : "np-toggle"}
-              onClick={() => setAirconOnly((prev) => !prev)}
-            >
-              <AirVent size={13} />
-              Aircon
+              <LocateFixed size={13} />
+              {locationLoading
+                ? "Getting location..."
+                : userLocation
+                ? "Location enabled"
+                : "Use my location"}
             </button>
 
             <span className="np-filter-count">
@@ -495,6 +771,12 @@ export default function ExplorePage({ user, onLoginClick, onLogout }) {
               <span className="np-filter-loading">Loading spaces...</span>
             )}
           </div>
+
+          {locationError && (
+            <div className="np-state-card np-error-card">
+              <p>{locationError}</p>
+            </div>
+          )}
         </section>
 
         {error && (
@@ -509,7 +791,10 @@ export default function ExplorePage({ user, onLoginClick, onLogout }) {
           <>
             <div className="np-results-header">
               <h3>Recommended Study Spaces</h3>
-              <p>{filteredSpaces.length} spaces found</p>
+              <p>
+                {filteredSpaces.length} spaces found
+                {userLocation ? " · sorted by distance" : ""}
+              </p>
             </div>
 
             {filteredSpaces.length === 0 ? (
@@ -554,32 +839,41 @@ export default function ExplorePage({ user, onLoginClick, onLogout }) {
                         <MapPin size={14} />
                         {displayFaculty(space.faculty)}
                       </span>
-                    </div>
 
-                    <div className="np-amenities">
-                      {space.has_power ? (
+                      {getDistanceText(space) && (
                         <span>
-                          <Zap size={12} />
-                          Power
+                          <LocateFixed size={14} />
+                          {getDistanceText(space)}
                         </span>
-                      ) : (
-                        <span className="muted">No power info</span>
-                      )}
-
-                      {space.has_aircon ? (
-                        <span>
-                          <AirVent size={12} />
-                          Aircon
-                        </span>
-                      ) : (
-                        <span className="muted">No aircon info</span>
                       )}
                     </div>
+
+                    {(space.has_power || space.has_aircon) && (
+                      <div className="np-amenities">
+                        {space.has_power && (
+                          <span>
+                            <Zap size={12} />
+                            Power
+                          </span>
+                        )}
+
+                        {space.has_aircon && (
+                          <span>
+                            <AirVent size={12} />
+                            Aircon
+                          </span>
+                        )}
+                      </div>
+                    )}
 
                     <div className="np-card-actions">
                       <button
                         className="np-card-primary"
-                        onClick={() => setSelectedSpace(space)}
+                        onClick={() => {
+                          setSelectedSpace(space);
+                          setIsEditing(false);
+                          setEditError("");
+                        }}
                       >
                         View Details
                       </button>
@@ -590,6 +884,15 @@ export default function ExplorePage({ user, onLoginClick, onLogout }) {
                       >
                         {user ? "Report Status" : "Login to Report"}
                       </button>
+
+                      {isAdmin && (
+                        <button
+                          className="np-card-admin"
+                          onClick={() => handleEditSpace(space)}
+                        >
+                          Edit Space
+                        </button>
+                      )}
                     </div>
                   </article>
                 ))}
@@ -618,12 +921,163 @@ export default function ExplorePage({ user, onLoginClick, onLogout }) {
 
               <button
                 className="np-modal-close"
-                onClick={() => setSelectedSpace(null)}
+                onClick={handleCloseSpaceModal}
               >
                 <X size={22} />
               </button>
             </div>
 
+            {isAdmin && !isEditing && (
+              <div className="np-details-admin-actions">
+                <button
+                  className="np-card-admin"
+                  onClick={() => handleEditSpace(selectedSpace)}
+                >
+                  Edit Space
+                </button>
+              </div>
+            )}
+
+            {isEditing ? (
+              <form className="np-edit-form" onSubmit={handleSaveSpace}>
+                <div className="np-detail-grid">
+                  <label className="np-detail-item">
+                    <span>Study Space Name</span>
+                    <input
+                      name="name"
+                      value={editForm.name}
+                      onChange={handleEditInputChange}
+                      required
+                    />
+                  </label>
+
+                  <label className="np-detail-item">
+                    <span>Building</span>
+                    <input
+                      name="building"
+                      value={editForm.building}
+                      onChange={handleEditInputChange}
+                    />
+                  </label>
+
+                  <label className="np-detail-item">
+                    <span>Faculty</span>
+                    <input
+                      name="faculty"
+                      value={editForm.faculty}
+                      onChange={handleEditInputChange}
+                      placeholder="Computing, Engineering"
+                    />
+                  </label>
+
+                  <label className="np-detail-item">
+                    <span>Venue Type</span>
+                    <select
+                      name="spotType"
+                      value={editForm.spotType}
+                      onChange={handleEditInputChange}
+                    >
+                      <option value="library">Library</option>
+                      <option value="study_room">Study Room</option>
+                      <option value="outdoor">Outdoor</option>
+                      <option value="lounge">Lounge</option>
+                      <option value="lab">Lab</option>
+                    </select>
+                  </label>
+
+                  <label className="np-detail-item">
+                    <span>Latitude</span>
+                    <input
+                      name="latitude"
+                      type="number"
+                      step="any"
+                      value={editForm.latitude}
+                      onChange={handleEditInputChange}
+                    />
+                  </label>
+
+                  <label className="np-detail-item">
+                    <span>Longitude</span>
+                    <input
+                      name="longitude"
+                      type="number"
+                      step="any"
+                      value={editForm.longitude}
+                      onChange={handleEditInputChange}
+                    />
+                  </label>
+
+                  <label className="np-detail-item">
+                    <span>Capacity</span>
+                    <input
+                      name="capacity"
+                      type="number"
+                      min="1"
+                      value={editForm.capacity}
+                      onChange={handleEditInputChange}
+                    />
+                  </label>
+                </div>
+
+                <div className="np-edit-checkbox-row">
+                  <label>
+                    <input
+                      name="hasPower"
+                      type="checkbox"
+                      checked={editForm.hasPower}
+                      onChange={handleEditInputChange}
+                    />
+                    Power sockets available
+                  </label>
+
+                  <label>
+                    <input
+                      name="hasAircon"
+                      type="checkbox"
+                      checked={editForm.hasAircon}
+                      onChange={handleEditInputChange}
+                    />
+                    Air-conditioning available
+                  </label>
+                </div>
+
+                <label className="np-edit-description">
+                  <span>Description</span>
+                  <textarea
+                    name="description"
+                    rows="4"
+                    value={editForm.description}
+                    onChange={handleEditInputChange}
+                    maxLength={1000}
+                  />
+                </label>
+
+                {editError && <p className="simpleError">{editError}</p>}
+
+                <div className="np-card-actions">
+                  <button
+                    className="np-card-primary"
+                    type="submit"
+                    disabled={editSaving}
+                  >
+                    {editSaving ? "Saving..." : "Save Changes"}
+                  </button>
+
+                  <button
+                    className="np-card-secondary"
+                    type="button"
+                    onClick={() => {
+                      setIsEditing(false);
+                      setEditError("");
+                    }}
+                    disabled={editSaving}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <>
             <div className="np-detail-grid">
               <div className="np-detail-item">
                 <span>Venue Type</span>
@@ -658,6 +1112,13 @@ export default function ExplorePage({ user, onLoginClick, onLogout }) {
                 <span>Aircon</span>
                 <strong>{getYesNo(selectedSpace.has_aircon)}</strong>
               </div>
+
+              {getDistanceText(selectedSpace) && (
+                <div className="np-detail-item">
+                  <span>Distance</span>
+                  <strong>{getDistanceText(selectedSpace)}</strong>
+                </div>
+              )}
             </div>
 
             <section className="np-details-section">
@@ -681,6 +1142,12 @@ export default function ExplorePage({ user, onLoginClick, onLogout }) {
                   selectedSpace.location ||
                   "No address provided"}
               </p>
+
+              {getDistanceText(selectedSpace) && (
+                <p>
+                  <strong>Distance:</strong> {getDistanceText(selectedSpace)}
+                </p>
+              )}
             </section>
 
             <section className="np-details-section">
@@ -746,7 +1213,139 @@ export default function ExplorePage({ user, onLoginClick, onLogout }) {
                 {user ? "Report Status" : "Login to Report"}
               </button>
             </section>
+              </>
+            )}
           </div>
+        </div>
+      )}
+
+      {feedbackSpace && (
+        <div className="np-modal-backdrop">
+          <div className="np-feedback-modal">
+            <div className="np-feedback-header">
+              <div>
+                <span className="np-feedback-badge">Community Report</span>
+                <h2>Report Study Space Status</h2>
+                <p>{feedbackSpace.name}</p>
+              </div>
+
+              <button
+                className="np-modal-close"
+                onClick={closeFeedbackModal}
+                aria-label="Close feedback form"
+              >
+                <X size={22} />
+              </button>
+            </div>
+
+            <form className="np-feedback-form" onSubmit={handleSubmitFeedback}>
+              <div className="np-feedback-field">
+                <label htmlFor="feedback-noise">Noise Level</label>
+                <p>How noisy is this space right now?</p>
+                <select
+                  id="feedback-noise"
+                  value={feedbackForm.noiseLevel}
+                  onChange={(e) =>
+                    setFeedbackForm((current) => ({
+                      ...current,
+                      noiseLevel: e.target.value,
+                    }))
+                  }
+                >
+                  <option value="1">1 — Very Quiet</option>
+                  <option value="2">2 — Quiet</option>
+                  <option value="3">3 — Moderate</option>
+                  <option value="4">4 — Noisy</option>
+                  <option value="5">5 — Very Noisy</option>
+                </select>
+              </div>
+
+              <div className="np-feedback-field">
+                <label htmlFor="feedback-crowd">Crowd Level</label>
+                <p>How crowded is this space right now?</p>
+                <select
+                  id="feedback-crowd"
+                  value={feedbackForm.crowdLevel}
+                  onChange={(e) =>
+                    setFeedbackForm((current) => ({
+                      ...current,
+                      crowdLevel: e.target.value,
+                    }))
+                  }
+                >
+                  <option value="1">1 — Almost Empty</option>
+                  <option value="2">2 — Light Crowd</option>
+                  <option value="3">3 — Moderate</option>
+                  <option value="4">4 — Busy</option>
+                  <option value="5">5 — Very Crowded</option>
+                </select>
+              </div>
+
+              <div className="np-feedback-field">
+                <label htmlFor="feedback-comment">Optional Comment</label>
+                <p>Add any useful context for other students.</p>
+                <textarea
+                  id="feedback-comment"
+                  rows="4"
+                  maxLength="500"
+                  placeholder="e.g. Quiet near the back, but most tables are occupied."
+                  value={feedbackForm.comment}
+                  onChange={(e) =>
+                    setFeedbackForm((current) => ({
+                      ...current,
+                      comment: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+
+              {feedbackError && (
+                <p className="simpleError">{feedbackError}</p>
+              )}
+
+              <div className="np-feedback-actions">
+                <button
+                  type="button"
+                  className="np-feedback-cancel"
+                  onClick={closeFeedbackModal}
+                  disabled={feedbackSaving}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  className="np-feedback-submit"
+                  disabled={feedbackSaving}
+                >
+                  {feedbackSaving ? "Submitting..." : "Submit Report"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {toast && (
+        <div className={`np-toast ${toast.type}`}>
+          <div className="np-toast-icon">
+            {toast.type === "success" ? "✓" : "!"}
+          </div>
+
+          <div className="np-toast-content">
+            <strong>
+              {toast.type === "success" ? "Success" : "Something went wrong"}
+            </strong>
+            <span>{toast.message}</span>
+          </div>
+
+          <button
+            className="np-toast-close"
+            onClick={() => setToast(null)}
+            aria-label="Close notification"
+          >
+            ×
+          </button>
         </div>
       )}
     </div>
