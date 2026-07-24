@@ -119,7 +119,7 @@ describe('Feedback', () => {
     it('should trigger score recalculation after submission', async () => {
       await agent
         .post('/api/feedback')
-        .send({ spotId: spot.id, noiseLevel: 4, crowdLevel: 5 });
+        .send({ spotId: spot.id, noiseLevel: 5, crowdLevel: 5 });
 
       // Check that score was updated
       const scoreRes = await pool.query(

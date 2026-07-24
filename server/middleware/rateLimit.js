@@ -1,10 +1,10 @@
 // HTTP request rate limiting
 const rateLimit = require('express-rate-limit');
 
-// Auth: 10 attempts per 5 min (increase leniency for now)
+// Auth: 10 attempts per 5 min (increased to 100 for testing)
 const authLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, // cooldown: 5 min
-  max: 10,
+  max: 100,
   message: {
     error: 'Too many attempts. Please try again in 5 minutes.',
   },

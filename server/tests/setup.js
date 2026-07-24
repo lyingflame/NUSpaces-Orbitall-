@@ -33,7 +33,7 @@ async function cleanDatabase() {
   `);
 }
 
-// Create test users (admin & regular user)
+// Create test user
 async function createTestUser(role = 'user') {
   const bcrypt = require('bcrypt');
   const email = role === 'admin' ? 'admin@u.nus.edu' : 'test@u.nus.edu';

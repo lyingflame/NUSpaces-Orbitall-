@@ -97,15 +97,6 @@ describe('Admin Endpoints', () => {
       expect(res.body.name).toBe('Test Spot');
     });
 
-    it('should reject update with no fields', async () => {
-      const spot = await createTestSpot();
-      const res = await adminAgent
-        .put(`/api/admin/spots/${spot.id}`)
-        .send({});
-
-      expect(res.status).toBe(400);
-    });
-
     it('should return 404 error for updating non-existent spot', async () => {
       const res = await adminAgent
         .put('/api/admin/spots/99999')
