@@ -200,14 +200,13 @@ describe('Study Spots', () => {
     });
   });
 
-  // Score refresh (admin only)
+  // Score refresh
   describe('POST /api/spots/refresh', () => {
     it('should recalculate and return all spots', async () => {
       await createTestSpot();
 
-      adminAgent = createAgent();
-      await loginAs(adminAgent, 'admin@u.nus.edu', 'password123');
-      const res = await adminAgent.post('/api/spots/refresh');
+      agent = createAgent();
+      const res = await agent.post('/api/spots/refresh');
 
       expect(res.status).toBe(200);
       expect(Array.isArray(res.body)).toBe(true);

@@ -18,6 +18,7 @@ const { testConnection } = require('./config/database');
 const { apiLimiter } = require('./middleware/rateLimit');
 const scoringService = require('./services/scoringService');
 const RefreshToken = require('./models/RefreshToken');
+const { scrapeOccupancy, scrapeSchedules } = require('./services/libraryScraper');
 
 const app = express();
 const PORT = process.env.PORT; 
@@ -82,6 +83,24 @@ cron.schedule('0 * * * *', async () => {
   }
 });
 
+// CRON: Scrape library occupancy every hour
+cron.schedule('0 * * * *', async () => {
+  try {
+    await scrapeOccupancy();
+  } catch (error) {
+    console.error('[CRON] Occupancy scrape failed:', error.message);
+  }
+});
+
+// CRON: Scrape library schedules and closures daily at 6am (might change)
+cron.schedule('0 6 * * *', async () => {
+  try {
+    await scrapeSchedules();
+  } catch (error) {
+    console.error('[CRON] Schedule scrape failed:', error.message);
+  }
+});
+
 app.use((req, res) => {
   res.status(404).json({ error: 'Endpoint not found' });
 });
@@ -109,4 +128,7 @@ async function startServer() {
   });
 }
 
-startServer();
+if (require.main === module) {
+  startServer();
+}
+module.exports = app;

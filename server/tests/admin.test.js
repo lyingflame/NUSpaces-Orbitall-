@@ -20,7 +20,7 @@ describe('Admin Endpoints', () => {
   });
 
 
-  describe('Role-Based Access Control', () => {
+  describe('RBAC Test', () => {
     it('should allow admin to access admin endpoints', async () => {
       const res = await adminAgent.get('/api/admin/schedules');
       expect(res.status).toBe(200);
@@ -51,9 +51,8 @@ describe('Admin Endpoints', () => {
     });
   });
 
-  // ── Study Spots CRUD ──
-
-  describe('Spot Management', () => {
+  // Study spots
+  describe('Spot Functions', () => {
     it('should add a new spot', async () => {
       const res = await adminAgent
         .post('/api/admin/spots')
