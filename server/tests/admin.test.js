@@ -319,4 +319,26 @@ describe('Admin Endpoints (RBAC)', () => {
       expect(res.status).toBe(403);
     });
   });
+
+  // Library Scraper
+  describe('Library Scraper', () => {
+    it('should trigger scrape as admin', async () => {
+      const res = await adminAgent.post('/api/admin/scrape');
+
+      expect(res.status).toBe(200);
+      expect(res.body.message).toContain('Scrape completed');
+      expect(res.body.result).toBeDefined();
+    });
+
+    it('should reject regular user from scraping', async () => {
+      const res = await userAgent.post('/api/admin/scrape');
+      expect(res.status).toBe(403);
+    });
+
+    it('should reject unauthenticated scrape', async () => {
+      const agent = createAgent();
+      const res = await agent.post('/api/admin/scrape');
+      expect(res.status).toBe(401);
+    });
+  });
 });

@@ -333,6 +333,17 @@ const adminController = {
       next(error);
     }
   },
+
+  // POST /api/admin/scrape — manual library scrape function
+  async scrapeLibraries(req, res, next) {
+    try {
+      const { scrapeAll } = require('../services/libraryScraper');
+      const result = await scrapeAll();
+      res.status(200).json({ message: 'Scrape completed:', result });
+    } catch (error) {
+      next(error);
+    }
+  },
 };
 
 module.exports = adminController;

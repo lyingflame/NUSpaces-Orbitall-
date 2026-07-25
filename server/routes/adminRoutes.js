@@ -29,6 +29,6 @@ router.get('/feedback', authenticate, authorise('admin'), adminController.getAll
 router.delete('/feedback/:id', authenticate, authorise('admin'), adminController.deleteFeedback);
 
 // Library scrapper (manual)
-//router.post('/scrape', authenticate, authorise('admin'), scrapeAll);
+router.post('/scrape', authenticate, authorise('admin'), adminController.scrapeLibraries);
 
 module.exports = router;
