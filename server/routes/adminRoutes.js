@@ -23,4 +23,8 @@ router.post('/overrides', authenticate, authorise('admin'), validateAddOverride,
 router.put('/overrides/:id', authenticate, authorise('admin'), validateUpdateOverride, adminController.updateOverride);
 router.delete('/overrides/:id', authenticate, authorise('admin'), adminController.deleteOverride);
 
+// Feedback moderation
+router.get('/feedback', authenticate, authorise('admin'), adminController.getAllFeedback);
+router.delete('/feedback/:id', authenticate, authorise('admin'), adminController.deleteFeedback);
+
 module.exports = router;

@@ -291,6 +291,48 @@ const adminController = {
       next(error);
     }
   },
+
+  // GET /api/admin/feedback?page=1&limit=20&spotId=1&userId=5 - fully list feedback by pages with spot and user filtering
+  async getAllFeedback(req, res, next) {
+    try {
+      const Feedback = require('../models/Feedback');
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 20;
+      const spotId = req.query.spotId || null;
+      const userId = req.query.userId || null;
+
+      const result = await Feedback.getAllPaginated({ page, limit, spotId, userId });
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // DELETE /api/admin/feedback/:id — remove inappropriate feedback (bad comments, intentionally skewing data, etc.)
+  async deleteFeedback(req, res, next) {
+    try {
+      const io = req.app.get('io');
+      const Feedback = require('../models/Feedback');
+      const feedbackId = parseInt(req.params.id);
+
+      const deleted = await Feedback.deleteById(feedbackId);
+      if (!deleted) {
+        return res.status(404).json({ error: 'Feedback not found.' });
+      }
+
+      // Recalculate score for the affected spot
+      const scoringService = require('../services/scoringService');
+      const currentTime = new Date().toTimeString().slice(0, 5);
+      await scoringService.computeScore(deleted.spot_id, currentTime, io);
+
+      res.status(200).json({
+        message: 'Feedback deleted and score recalculated.',
+        deleted,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
 };
 
 module.exports = adminController;

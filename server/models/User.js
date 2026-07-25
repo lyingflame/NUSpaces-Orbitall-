@@ -9,7 +9,7 @@ const User = {
       const result = await query(
         `INSERT INTO users (email, username, password_hash)
          VALUES ($1, $2, $3)
-         RETURNING id, email, username, created_at`,
+         RETURNING id, email, username, role, created_at`,
         [email, username, passwordHash]
       );
       return result.rows[0];
