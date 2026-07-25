@@ -95,6 +95,15 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
     created_at      TIMESTAMP DEFAULT NOW()
 );
 
+-- User favourite spots table
+CREATE TABLE IF NOT EXISTS favourites (
+    id       BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id  INT REFERENCES users(id) ON DELETE CASCADE,
+    spot_id  INT REFERENCES study_spots(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(user_id, spot_id)
+);
+
 -- Indexes
 
 -- for feedback queries
@@ -116,3 +125,6 @@ CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token
 -- for finding all tokens by user (auth/logout)
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user
     ON refresh_tokens(user_id);
+
+-- for finding user favourite spots
+CREATE INDEX IF NOT EXISTS idx_favourites_user ON favourites(user_id);
