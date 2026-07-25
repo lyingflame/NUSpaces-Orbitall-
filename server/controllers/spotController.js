@@ -114,8 +114,8 @@ const spotController = {
     }
   },
 
-  // GET /api/spots/:id (for single spots)
-  async getSpotById(req, res, next) {
+  // GET /api/spots/:id (for single spots) - feedback stats, peak hours, trends and recent feedbacks added
+async getSpotById(req, res, next) {
     try {
       const spotId = parseInt(req.params.id);
       const spot = await StudySpot.findById(spotId);
@@ -129,23 +129,35 @@ const spotController = {
       const today = now.toISOString().slice(0, 10);
       const dayType = getDayType(now);
 
-      const [recentFeedback, allSchedules, todayOverrides] = await Promise.all([
+      const queries = [
         Feedback.getRecentForDisplay(spotId),
         Schedule.getAllSchedules(),
         Schedule.getAllOverridesForDate(today),
-      ]);
+        Feedback.getStats(spotId),
+        Feedback.getPeakHours(spotId),
+        Feedback.getDailyTrend(spotId),
+      ];
+
+      const [recentFeedback, allSchedules, todayOverrides, stats, peakHours, dailyTrend] =
+        await Promise.all(queries);
 
       const override = todayOverrides[spot.id];
       const schedule = allSchedules[spot.id]?.[dayType];
       const status = getOpeningStatus(override, schedule, currentTime);
 
-      // weekly schedule
       const spotSchedules = allSchedules[spot.id] || {};
       const weekly = {
         weekday: formatScheduleRow(spotSchedules.weekday),
         saturday: formatScheduleRow(spotSchedules.saturday),
         sunday: formatScheduleRow(spotSchedules.sunday),
       };
+
+      // Check if user has favourited this spot (must be authenticated)
+      let is_favourited = false;
+      if (req.user) {
+        const Favourite = require('../models/Favourite');
+        is_favourited = await Favourite.isFavourited(req.user.id, spotId);
+      }
 
       res.status(200).json({
         ...spot,
@@ -154,7 +166,19 @@ const spotController = {
         opening_hours: status.opening_hours,
         schedule_reason: status.reason,
         weekly_schedule: weekly,
+        is_favourited,
         recentFeedback,
+        stats: {
+          totalFeedback: stats.total_feedback,
+          feedbackLast7d: stats.feedback_last_7d,
+          feedbackLast24h: stats.feedback_last_24h,
+          avgNoiseRaw: parseFloat(stats.avg_noise_raw) || null,
+          avgCrowdRaw: parseFloat(stats.avg_crowd_raw) || null,
+          avgNoise7d: parseFloat(stats.avg_noise_7d) || null,
+          avgCrowd7d: parseFloat(stats.avg_crowd_7d) || null,
+        },
+        peakHours,
+        dailyTrend,
       });
     } catch (error) {
       next(error);

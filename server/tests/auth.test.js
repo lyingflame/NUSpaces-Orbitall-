@@ -1,4 +1,4 @@
-// Auth endpoint tests
+// Test auth endpoints
 
 const { createAgent } = require('./setup');
 const { cleanDatabase, createTestUser, pool } = require('./setup');

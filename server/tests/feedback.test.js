@@ -1,4 +1,4 @@
-// Feedback endpoints test
+// Test feedback endpoints
 
 const { createAgent } = require('./setup');
 const { cleanDatabase, createTestUser, createTestSpot, loginAs, pool } = require('./setup');

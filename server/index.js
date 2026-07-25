@@ -48,6 +48,7 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/spots', require('./routes/spotRoutes'));
 app.use('/api/feedback', require('./routes/feedbackRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/profile', require('./routes/profileRoutes'));
 
 // Health check (debugging)
 app.get('/api/health', (req, res) => {
@@ -66,7 +67,7 @@ io.on('connection', (socket) => {
 // CRON: Update scores every 15 minutes
 cron.schedule('*/15 * * * *', async () => {
   try { 
-    const result = await scoringService.recalculateAllScores();
+    const result = await scoringService.recalculateAllScores(io);
     console.log(`[CRON] Scores updated for ${result.spotsUpdated} spots at ${result.time}`);
   } catch (error) {
     console.error('[CRON] Score recalculation failed:', error.message);
@@ -117,7 +118,7 @@ async function startServer() {
 
   // Run score calculation on startup
   try {
-    const result = await scoringService.recalculateAllScores();
+    const result = await scoringService.recalculateAllScores(io);
     console.log(`Initial scores calculated for ${result.spotsUpdated} spots`);
   } catch (error) {
     console.error('Initial score calculation failed:', error.message);

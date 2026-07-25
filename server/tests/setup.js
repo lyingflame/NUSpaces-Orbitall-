@@ -1,16 +1,16 @@
-// Need to setup nuspaces_test DB for unit testing
+// Test environment setup
+// Need to create nuspaces_test DB
 
 const path = require('path');
 const dotenv = require('dotenv');
 const fs = require('fs');
 
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
-process.env.DB_NAME = 'nuspaces_test';
 process.env.NODE_ENV = 'test';
+
+dotenv.config({ path: path.resolve(__dirname, '../.env.test') });
 
 const { pool } = require('../config/database');
 
-// Run migrations for test database
 async function runMigrations() {
   const sqlPath = path.resolve(__dirname, '../../database/001_initial.sql');
   if (!fs.existsSync(sqlPath)) {
@@ -20,20 +20,20 @@ async function runMigrations() {
   await pool.query(sql);
 }
 
-// Clear data
 async function cleanDatabase() {
   await pool.query(`
     DELETE FROM spot_schedule_overrides;
     DELETE FROM spot_schedules;
     DELETE FROM spot_scores;
     DELETE FROM feedback;
+    DELETE FROM favourites;
     DELETE FROM refresh_tokens;
     DELETE FROM study_spots;
     DELETE FROM users;
   `);
 }
 
-// Create test user
+// Create test user (user or admin)
 async function createTestUser(role = 'user') {
   const bcrypt = require('bcrypt');
   const email = role === 'admin' ? 'admin@u.nus.edu' : 'test@u.nus.edu';
@@ -48,7 +48,7 @@ async function createTestUser(role = 'user') {
   return result.rows[0];
 }
 
-// Create a test study spot
+// Create test spot (to fill test DB)
 async function createTestSpot(overrides = {}) {
   const spot = {
     name: 'Test Spot', building: 'Test Building', faculty: ['Computing'],
@@ -74,12 +74,12 @@ async function createTestSpot(overrides = {}) {
   return created;
 }
 
-// Login agent function
+// Login helper
 async function loginAs(agent, email = 'test@u.nus.edu', password = 'password123') {
   return agent.post('/api/auth/login').send({ email, password });
 }
 
-// Agent to retain user cookies (for testing auth)
+// Create agent to maintain cookies for auth
 function createAgent() {
   const request = require('supertest');
   const app = require('../index');
