@@ -96,7 +96,18 @@ const addSpotSchema = z.object({
 });
 
 // Admin: update study spot (all fields optional)
-const updateSpotSchema = addSpotSchema.partial();
+const updateSpotSchema = z.object({
+  name: z.string().min(1).max(255).optional(),
+  building: z.string().max(255).optional(),
+  faculty: z.array(z.string()).optional(),
+  spotType: z.enum(['library', 'study_room', 'outdoor', 'lounge', 'lab']).optional(),
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
+  capacity: z.number().int().positive().optional(),
+  hasPower: z.boolean().optional(),
+  hasAircon: z.boolean().optional(),
+  description: z.string().max(1000).optional(),
+});
 
 // Admin: Change study spot schedule (can be null)
 const scheduleSchema = z.object({
@@ -115,9 +126,9 @@ const scheduleSchema = z.object({
 const addOverrideSchema = z.object({
   spotId: z.number({ required_error: 'Spot ID is required.' }).int(),
   startDate: z.string({ required_error: 'Start date is required.' })
-    .regex(/^\d{2}-\d{2}-\d{4}$/, 'Date must be YYYY-MM-DD.'),
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD.'),
   endDate: z.string({ required_error: 'End date is required.' })
-    .regex(/^\d{2}-\d{2}-\d{4}$/, 'Date must be YYYY-MM-DD.'),
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD.'),
   openingTime: z.string().regex(/^\d{2}:\d{2}$/, 'Time must be HH:MM.').optional(),
   closingTime: z.string().regex(/^\d{2}:\d{2}$/, 'Time must be HH:MM.').optional(),
   is24hr: z.boolean().optional().default(false),
@@ -140,7 +151,27 @@ const updateOverrideSchema = z.object({
   reason: z.string().max(500).optional(),
 });
 
-// 8 exports
+// Profile: Change password
+const changePasswordSchema = z.object({
+  currentPassword: z.string({ required_error: 'Current password is required.' }).min(1),
+  newPassword: z
+    .string({ required_error: 'New password is required.' })
+    .min(8, 'Password must be at least 8 characters.')
+    .regex(/[a-zA-Z]/, 'Password must contain at least one letter.')
+    .regex(/[0-9]/, 'Password must contain at least one number.'),
+});
+
+// Profile: Update username
+const updateUsernameSchema = z.object({
+  username: z
+    .string({ required_error: 'Username is required.' })
+    .min(3, 'Username must be at least 3 characters.')
+    .max(50, 'Username must be at most 50 characters.')
+    .regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores.')
+    .transform(val => val.trim()),
+});
+
+// 10 exports
 const validateRegistration = validate(registerSchema);
 const validateLogin = validate(loginSchema);
 const validateFeedback = validate(feedbackSchema);
@@ -149,7 +180,10 @@ const validateUpdateSpot = validate(updateSpotSchema);
 const validateSchedule = validate(scheduleSchema);
 const validateAddOverride = validate(addOverrideSchema);
 const validateUpdateOverride = validate(updateOverrideSchema);
+const validateChangePassword = validate(changePasswordSchema);
+const validateUpdateUsername = validate(updateUsernameSchema);
  
 module.exports = { 
-  validateRegistration, validateLogin, validateFeedback, validateAddSpot, validateUpdateSpot, validateSchedule, validateAddOverride, validateUpdateOverride,
+  validateRegistration, validateLogin, validateFeedback, validateAddSpot, validateUpdateSpot, 
+  validateSchedule, validateAddOverride, validateUpdateOverride, validateChangePassword, validateUpdateUsername,
 };

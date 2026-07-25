@@ -497,6 +497,7 @@ async function seed() {
     await pool.query('DELETE FROM spot_schedules');
     await pool.query('DELETE FROM spot_scores');
     await pool.query('DELETE FROM feedback');
+    await pool.query('DELETE FROM favourites');
     await pool.query('DELETE FROM study_spots');
     await pool.query('DELETE FROM users');
     console.log('Cleared existing data.\n');
