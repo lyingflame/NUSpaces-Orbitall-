@@ -30,4 +30,18 @@ async function authenticate(req, res, next) {
   }
 }
 
-module.exports = { authenticate };
+async function optionalAuth(req, res, next) { // for checking if logged in or not
+  try {
+    const token = req.cookies.accessToken;
+    if (!token) return next();
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.userId);
+    if (user) req.user = user;
+  } catch {
+    // Invalid token/not logged in
+  }
+  next();
+}
+
+module.exports = { authenticate, optionalAuth };

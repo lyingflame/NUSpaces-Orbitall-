@@ -16,6 +16,6 @@ router.get('/favourites/ids', authenticate, favouriteController.getFavouriteIds)
 router.post('/:id/favourite', authenticate, favouriteController.addFavourite);
 router.delete('/:id/favourite', authenticate, favouriteController.removeFavourite);
 
-router.get('/:id', spotController.getSpotById);
+router.get('/:id', optionalAuth, spotController.getSpotById);
 
 module.exports = router;

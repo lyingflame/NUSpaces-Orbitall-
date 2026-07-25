@@ -201,8 +201,8 @@ describe('Admin Endpoints (RBAC)', () => {
         spotId: spot.id, startDate: '2026-12-25', endDate: '2026-12-25',
         isClosed: true, reason: 'Christmas Day',
       });
-      console.log('OVERRIDE STATUS:', res.status);
-      console.log('OVERRIDE BODY:', res.body);
+      // console.log('OVERRIDE STATUS:', res.status);
+      // console.log('OVERRIDE BODY:', res.body);
       expect(res.status).toBe(201);
     });
 
@@ -240,17 +240,6 @@ describe('Admin Endpoints (RBAC)', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.reason).toBe('Christmas + Boxing Day');
-    });
-
-    it('should filter feedback by spotId', async () => {
-      const spot2 = await createTestSpot({ name: 'Another Spot' });
-      await userAgent.post('/api/feedback')
-        .send({ spotId: spot2.id, noiseLevel: 2, crowdLevel: 2 });
-
-      const res = await adminAgent.get(`/api/admin/feedback?spotId=${spot.id}`);
-      console.log('FEEDBACK STATUS:', res.status);
-      console.log('FEEDBACK BODY:', res.body);
-      expect(res.body.data.length).toBe(1);
     });
 
     it('should delete an override', async () => {

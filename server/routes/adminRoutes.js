@@ -6,6 +6,7 @@ const adminController = require('../controllers/adminController');
 const { authenticate } = require('../middleware/authentication');
 const { authorise } = require('../middleware/authorisation');
 const { validateAddSpot, validateUpdateSpot, validateSchedule, validateAddOverride, validateUpdateOverride } = require('../middleware/validation');
+const { scrapeAll } = require('../services/libraryScraper');
 
 // Spots
 router.post('/spots', authenticate, authorise('admin'), validateAddSpot, adminController.addSpot);
@@ -26,5 +27,8 @@ router.delete('/overrides/:id', authenticate, authorise('admin'), adminControlle
 // Feedback moderation
 router.get('/feedback', authenticate, authorise('admin'), adminController.getAllFeedback);
 router.delete('/feedback/:id', authenticate, authorise('admin'), adminController.deleteFeedback);
+
+// Library scrapper (manual)
+//router.post('/scrape', authenticate, authorise('admin'), scrapeAll);
 
 module.exports = router;
