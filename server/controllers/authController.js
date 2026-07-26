@@ -1,6 +1,7 @@
 // Auth controller — handles registration, login, and current user
 
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const RefreshToken = require('../models/RefreshToken');
@@ -161,7 +162,7 @@ function generateAccessToken(userId) {
 
 function generateRefreshToken(userId) {
   return jwt.sign(
-    { userId },
+    { userId, jti: crypto.randomUUID() },
     process.env.JWT_REFRESH_SECRET,
     { expiresIn: REFRESH_TOKEN_EXPIRY }
   );
