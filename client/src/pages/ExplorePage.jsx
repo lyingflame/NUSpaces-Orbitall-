@@ -47,6 +47,7 @@ function getNoiseStatus(space) {
   return space.noiseLevel || "No reports yet";
 }
 
+//convert backedn 0-100 crowd score to 1-5 
 function normalisedScoreToFivePoint(score) {
   const value = Number(score);
   if (Number.isNaN(value)) return null;
@@ -139,10 +140,11 @@ function getDistanceText(space) {
 export default function ExplorePage({ user, onLoginClick, onLogout }) {
   const isAdmin = user?.role === "admin";
 
+  //study spac4e data
   const [spaces, setSpaces] = useState([]);
   const [selectedSpace, setSelectedSpace] = useState(null);
 
-  // Admin-only edit state
+
   const [isEditing, setIsEditing] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState("");
@@ -159,6 +161,7 @@ export default function ExplorePage({ user, onLoginClick, onLogout }) {
     description: "",
   });
 
+  //search and filter states
   const [search, setSearch] = useState("");
   const [noiseFilter, setNoiseFilter] = useState("All");
   const [crowdFilter, setCrowdFilter] = useState("All");
@@ -169,6 +172,7 @@ export default function ExplorePage({ user, onLoginClick, onLogout }) {
   const [powerOnly, setPowerOnly] = useState(false);
   const [airconOnly, setAirconOnly] = useState(false);
 
+  //Location
   const [userLocation, setUserLocation] = useState(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState("");
@@ -177,10 +181,9 @@ export default function ExplorePage({ user, onLoginClick, onLogout }) {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
 
-  // Custom toast notifications for success/error feedback
   const [toast, setToast] = useState(null);
 
-  // Custom feedback modal state
+  // feedback
   const [feedbackSpace, setFeedbackSpace] = useState(null);
   const [feedbackForm, setFeedbackForm] = useState({
     noiseLevel: "3",
@@ -249,6 +252,7 @@ export default function ExplorePage({ user, onLoginClick, onLogout }) {
     }
   }
 
+  //request user coordinates, reload space, backend calculate distance 
   function handleUseMyLocation() {
     setLocationError("");
 
